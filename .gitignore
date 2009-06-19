@@ -1,0 +1,9 @@
+*~
+*.pyc
+*.diff
+*.swp
+*.profile
+*.aux
+*.toc
+*.log
+*.out
