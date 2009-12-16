@@ -2,9 +2,16 @@ import unittest
 from test import test_support
 
 import numpy
+import numpy.random
 from numpy.testing.utils import assert_equal
 
 def compute_run_ends(a):
+    """
+    maps flat array a to a boolean array e, where
+    e[i] is defined by (a[i] != a[i+1])
+    
+    the last element of e is defined to be True
+    """
     ends = numpy.zeros(numpy.shape(a), dtype = numpy.bool)
     ends[-1] = True
     ends[:-1] = numpy.not_equal(a[:-1], a[1:])
@@ -48,8 +55,38 @@ def suite():
     suite = unittest.TestLoader().loadTestsFromTestCase(KeyValueMergeTests)
     return suite
 
+def create_random_data(num_entries, num_keys):
+    min_key = -100000
+    max_key = 100000
+    key_domain = numpy.random.randint(min_key, max_key, size = (num_keys, ))
+    
+    keys = key_domain[numpy.random.randint(0, num_keys, size = (num_entries, ))]
+    values = numpy.random.random(size = (num_entries,))
+    return (keys, values)
+
+def dict_sum_duplicate_keys(keys, values):
+    import itertools
+    d = {}
+    for k, v in itertools.izip(keys, values):
+        d[k] = d.get(k, 0.0)+v
+    return d
+
+def compare():
+    num_runs = 100
+    for run in xrange(num_runs):
+        print 'run %d of %d' % (run+1, num_runs)
+        keys, values = create_random_data(100000, 100)
+        result_dict = dict_sum_duplicate_keys(keys, values)
+        result_vect = sum_duplicate_keys(keys, values)
+    
 def main():
     test_support.run_unittest(KeyValueMergeTests)
 
 if __name__ == '__main__':
-    main()
+    #main()
+    import cProfile, pstats
+    PROFILE_FILE = 'vector_key_value_merge.profile'
+    cProfile.run('compare()', PROFILE_FILE)
+    stats = pstats.Stats(PROFILE_FILE)
+    stats.sort_stats('cumulative').print_stats(30)
+    
