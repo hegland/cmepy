@@ -19,6 +19,9 @@ def additional_tests():
     from cmepy.new_core import cme_solver_tests
     test_suites.add(cme_solver_tests.suite())
     
+    from cmepy.new_core import recorder_tests
+    test_suites.add(recorder_tests.suite())
+    
     all_test_suite = unittest.TestSuite(test_suites)
     
     return all_test_suite
