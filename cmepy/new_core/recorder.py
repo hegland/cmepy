@@ -2,55 +2,56 @@
 CmeRecorder is a utility class for computation of measurements.
 """
 
-class CmeRecorder():
+import cmepy.new_core.sparse_marginal as sparse_marginal
+
+
+class MeasurementInfo(object):
+    """
+    Stores measurements of a specified variable.
+    
+    Created internally by CmeRecorder.
+    """
+    
+    def __init__(self, name, dim, target_outputs):
+        """
+        MeasurementInfo instances are constructed internally via CmeRecorder
+        
+        Arguments:
+        
+        name : name of the variable
+        dim : dimension index corresponding to this name (TODO FIXME ...)
+        target_outputs : sequence of outputs to store for this variable
+        """
+        self.name = name
+        self.dim = dim
+        self.times = []
+        self.target_outputs = target_outputs
+        for output in target_outputs:
+            self.__dict__[output] = []
+    
+    def add_measurement(self, output_name, measurement):
+        """
+        Stores given measurement of specified output.
+        
+        Called via CmeRecorder to add measurement entries.
+        """
+        self.__dict__[output_name].append(measurement)
+
+class Measurer(object):
+    
+    def __init__(self, group_name, variable_name, marginal_creators):
+        self.group_name = group_name
+        self.output_name = output_name
+        self.variable_names = variable_names
+        self.marginal_creators = marginal_creators
+    
+    def compute(self, var_name, t, p, measurement_cache):
+
+class CmeRecorder(object):
     """
     XXX TODO
         
     """
-    
-    class MeasurementInfo():
-        """
-        Stores measurements of a specified variable.
-        
-        Created internally by CmeRecorder.
-        """
-        
-        def __init__(self, name, dim, target_output):
-            """
-            MeasurementInfo instances are constructed internally via CmeRecorder
-            
-            Arguments:
-            
-            name : name of the variable
-            dim : dimension index corresponding to this name (TODO FIXME ...)
-            target_output : sequence of outputs to store for this variable
-            """
-            self.name = name
-            self.dim = dim
-            self.times = []
-            self.target_output = target_output
-            for output in target_output:
-                self.__dict__[output] = []
-        
-        def add_measurement(self, output_name, measurement):
-            """
-            Stores given measurement of specified output.
-            
-            Called via CmeRecorder to add measurement entries.
-            """
-            self.__dict__[output_name].append(measurement)
-    
-    def __add_all_measurers(self):
-        """
-        This is where we register all of the defined measurer subclasses ...
-        """
-        import cmepy.new_core.reaction_measurers as reaction_m
-        import cmepy.new_core.species_measurers as species_m
-        measurer_modules = [reaction_m, species_m]
-        for measurer_module in measurer_modules:
-            for measurer_class in measurer_module.all_measurers():
-                measurer = measurer_class(self)
-                self.__add_measurer(measurer)
     
     def __init__(self, model, **kwargs):
         """
@@ -64,7 +65,7 @@ class CmeRecorder():
             CmeSolver. Defaults to (0,0, ..., 0).
         """
         self.model = model
-        self.dims = len(self.model['propensities'])
+        self.dims = len(self.model['np'])
         self.args = kwargs
         if 'norigin' not in self.args:
             self.args['norigin'] = (0,)*self.dims
@@ -73,17 +74,10 @@ class CmeRecorder():
         self.group_names = set()
         self.output_names = set()
         self.__measurement_cache = None
-        self.__add_all_measurers()
     
-    def __add_measurer(self, measurer):
-        key = (measurer.group_name, measurer.output_name)
-        self.measurers[key] = measurer
+    def __add_measurer(self, group_name, output_name, variable_name, transform):
         
-        if measurer.group_name not in self.group_names:
-            self.__dict__[measurer.group_name] = {}
-            self.group_names.add(measurer.group_name)
-        if measurer.output_name not in self.output_names:
-            self.output_names.add(measurer.output_name)
+        
     
     def get_measurement_info(self, group_name, var_name):
         """
