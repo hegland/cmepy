@@ -1,17 +1,17 @@
 
 
-def get_simple_model():
+def get_simple_model(count=1):
     epsilon = 0.01
     epsilon_inverse = 1.0 / epsilon
     model = {'propensities' : (lambda *x : 1.0*x[0],
                                lambda *x : epsilon_inverse*x[1]),
-             'np' : (2, 2, ),
+             'np' : (count+1, )*2,
              'offset_vectors' : ((-1, 1), (0, -1)),
              'doc' : 'simple catalytic reaction scheme',
              'species' : ('S_1', 'S_2', 'S_3'),
              'species counts' : (lambda *x : x[0],
                                  lambda *x : x[1],
-                                 lambda *x : 1-x[0]-x[1])
+                                 lambda *x : count-x[0]-x[1])
              }
     return model
 

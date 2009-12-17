@@ -73,6 +73,8 @@ class SparseMarginal(object):
         
         returns self
         """
+        if numpy.size(self.keys)==0:
+            return self
         sort_indices = numpy.argsort(self.keys)
         sorted_keys = self.keys[sort_indices]
         sorted_values = self.values[sort_indices]
