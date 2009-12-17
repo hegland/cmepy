@@ -4,6 +4,11 @@ CmeRecorder is a utility class for computation of measurements.
 
 import cmepy.new_core.sparse_marginal as sparse_marginal
 
+def _clean_output_name(output_name):
+    """
+    used internally by MeasurementInfo
+    """
+    return output_name.replace(' ', '_')
 
 class MeasurementInfo(object):
     """
@@ -19,28 +24,36 @@ class MeasurementInfo(object):
         Arguments:
         
         name : name of the variable
-        target_outputs : list of outputs types to store
+        target_outputs : list of output types to store
         """
         
         self.name = name
         self.target_outputs = target_outputs
         for output in self.target_outputs:
-            self.__dict__[self._clean_output_name(output)] = []
+            self.__dict__[_clean_output_name(output)] = []
         
         self._transform = None
         self._dim = None
         self.times = []
     
-    def _clean_output_name(self, output_name):
-        # replace any spaces in output name with underscores
-        return output_name.replace(' ', '_')
-    
     def set_transform(self, transform):
+        """
+        Specifies how to transform from the state space of the probability
+        distribution p to the state space of this variable.
+        
+        Mutually exclusive to set_dim.
+        """
         if self._dim is not None:
             raise RuntimeError('cannot set both transform and dim')
         self._transform = transform
     
     def set_dim(self, dim):
+        """
+        Specifies which dimension of the state space this variable corresponds
+        to.
+        
+        Mutually exclusive to set_transform.
+        """
         if self._transform is not None:
             raise RuntimeError('cannot set both transform and dim')
         self._dim = dim
@@ -64,12 +77,13 @@ class MeasurementInfo(object):
         
         Called via CmeRecorder to add measurement entries.
         """
-        self.__dict__[self._clean_output_name(output_name)].append(measurement)
+        self.__dict__[_clean_output_name(output_name)].append(measurement)
 
 class CmeRecorder(object):
     """
-    XXX TODO
-        
+    CmeRecorder is a utility class to compute common measurements,
+    such as marginals, expected values, and standard deviations, from
+    a given disitribution p. 
     """
     
     def __init__(self, model, **kwargs):
@@ -80,8 +94,8 @@ class CmeRecorder(object):
         
         Optional Keyword Arguments:
         
-        norigin : origin of the reaction-count state space used by the
-            CmeSolver. Defaults to (0,0, ..., 0).
+        norigin : origin of the state space used.
+            Defaults to (0,0, ..., 0).
         """
         self.model = model
         self.dims = len(self.model['propensities'])
@@ -105,7 +119,7 @@ class CmeRecorder(object):
     
     def add_target(self, group_name, outputs, variable_names, transforms=None):
         """
-        xxx todo
+        Register output types to be computed for a group of variables.
         """
         
         for output_name in outputs:
@@ -179,9 +193,7 @@ class CmeRecorder(object):
             expected_value_key = (group_name,
                                   'expected value',
                                   var_name)
-            standard_deviation_key = (group_name,
-                                      'standard deviation',
-                                      var_name)
+            
             if output_name == 'marginal':
                 prereq_keys = set()
             if output_name == 'expected value':
