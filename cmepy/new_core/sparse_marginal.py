@@ -24,8 +24,11 @@ def create_coord_sparse_marginal(dim, p, norigin=None):
             axis += 1
             continue
         marginal = numpy.sum(marginal, axis)
-    
-    states = numpy.arange(norigin[dim], norigin[dim]+np[dim])
+    if norigin is None:
+        dim_offset = 0
+    else:
+        dim_offset = norigin[dim]
+    states = numpy.arange(dim_offset, dim_offset+np[dim])
     sparse_marginal = SparseMarginal(states,
                                      marginal)
     return sparse_marginal.compress()

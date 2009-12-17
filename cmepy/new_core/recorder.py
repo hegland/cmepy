@@ -98,10 +98,9 @@ class CmeRecorder(object):
             Defaults to (0,0, ..., 0).
         """
         self.model = model
-        self.dims = len(self.model['propensities'])
         self.args = kwargs
         if 'norigin' not in self.args:
-            self.args['norigin'] = (0,)*self.dims
+            self.args['norigin'] = None
         
         self._measurements = {}
         self.group_names = set()
