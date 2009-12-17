@@ -12,22 +12,51 @@ class MeasurementInfo(object):
     Created internally by CmeRecorder.
     """
     
-    def __init__(self, name, dim, target_outputs):
+    def __init__(self, name, target_outputs):
         """
         MeasurementInfo instances are constructed internally via CmeRecorder
         
         Arguments:
         
         name : name of the variable
-        dim : dimension index corresponding to this name (TODO FIXME ...)
-        target_outputs : sequence of outputs to store for this variable
+        target_outputs : list of outputs types to store
         """
+        
         self.name = name
-        self.dim = dim
-        self.times = []
         self.target_outputs = target_outputs
-        for output in target_outputs:
-            self.__dict__[output] = []
+        for output in self.target_outputs:
+            self.__dict__[self._clean_output_name(output)] = []
+        
+        self._transform = None
+        self._dim = None
+        self.times = []
+    
+    def _clean_output_name(self, output_name):
+        # replace any spaces in output name with underscores
+        return output_name.replace(' ', '_')
+    
+    def set_transform(self, transform):
+        if self._dim is not None:
+            raise RuntimeError('cannot set both transform and dim')
+        self._transform = transform
+    
+    def set_dim(self, dim):
+        if self._transform is not None:
+            raise RuntimeError('cannot set both transform and dim')
+        self._dim = dim
+    
+    def compute_marginal(self, p, norigin):
+        if self._transform is not None:
+            marginal = sparse_marginal.create_sparse_marginal(self._transform,
+                                                              p,
+                                                              norigin)
+        elif self._dim is not None:
+            marginal = sparse_marginal.create_coord_sparse_marginal(self._dim,
+                                                                    p,
+                                                                    norigin)
+        else:
+            raise RuntimeError('transform or dim must first be set')
+        return marginal
     
     def add_measurement(self, output_name, measurement):
         """
@@ -35,17 +64,7 @@ class MeasurementInfo(object):
         
         Called via CmeRecorder to add measurement entries.
         """
-        self.__dict__[output_name].append(measurement)
-
-class Measurer(object):
-    
-    def __init__(self, group_name, variable_name, marginal_creators):
-        self.group_name = group_name
-        self.output_name = output_name
-        self.variable_names = variable_names
-        self.marginal_creators = marginal_creators
-    
-    def compute(self, var_name, t, p, measurement_cache):
+        self.__dict__[self._clean_output_name(output_name)].append(measurement)
 
 class CmeRecorder(object):
     """
@@ -65,144 +84,143 @@ class CmeRecorder(object):
             CmeSolver. Defaults to (0,0, ..., 0).
         """
         self.model = model
-        self.dims = len(self.model['np'])
+        self.dims = len(self.model['propensities'])
         self.args = kwargs
         if 'norigin' not in self.args:
             self.args['norigin'] = (0,)*self.dims
         
-        self.measurers = {}
+        self._measurements = {}
         self.group_names = set()
-        self.output_names = set()
-        self.__measurement_cache = None
-    
-    def __add_measurer(self, group_name, output_name, variable_name, transform):
+        self.output_names = set(['marginal',
+                                 'expected value',
+                                 'standard deviation'])
+        self._measurement_cache = None
         
-        
-    
     def get_measurement_info(self, group_name, var_name):
         """
         Returns recorded measurement information for specified variable from
         specified group.
         """
-        return self.__dict__[group_name][var_name]
+        return self._measurements[group_name][var_name]
     
-    def add_target(self, output, **kwargs):
+    def add_target(self, group_name, outputs, variable_names, transforms=None):
         """
-        Add specified outputs & variables for later measurement.
-        
-        Arguments:
-        
-        output : a sequence of valid output names.
-            Valid output names for reactions:
-                'expectation', 'std_dev', 'marginal'
-            Valid output names for species:
-                'expectation', 'std_dev', 'sparse_marginal'
-        
-        Optional Keyword Arguments:
-        
-        reactions : a sequence of reaction names defined by the model
-        species : a sequence of species names defined by the model
-        
-        Some examples of usage:
-        
-            i.    To specify that the expectation of all reaction counts
-                  should be measured:
-
-                      recorder.add_target(output = ['expectation'],
-                                          reactions = model['reactions'])
-            
-            ii.    To specify that the expectation and standard deviation
-                   of all species counts should be measured:
-
-                      recorder.add_target(output = ['expectation', 'std_dev'],
-                                          species = model['species'])
-            
-            iii.   To specify that the marginal distribution of the reaction
-                   count with name 'A->B'should be measured:
-
-                      recorder.add_target(output = ['marginal'],
-                                          reactions = ['A->B'])
+        xxx todo
         """
         
-        for output_name in output:
+        for output_name in outputs:
             if output_name not in self.output_names:
                 complaint = ('unknown output format: \"'+str(output_name)
                              +'\". Known formats: ')
                 known_output_formats = ', '.join(self.output_names)
                 raise KeyError, complaint + known_output_formats
-        for group_name in kwargs:
-            for name in kwargs.get(group_name, []):
-                # compute dim, the dimension this name corresponds to
-                # we do this by linearly searching through the names listed
-                # by the model for this group (reaction / species).
-                if group_name not in self.__dict__:
-                    complaint = ('unknown variable group'
-                                 +' \"'+str(group_name)+'\".'
-                                 +' Known variable groups: ')
-                    known_group_names = ', '.join(self.group_names)
-                    raise KeyError, complaint + known_group_names
-                if group_name not in self.model:
-                    complaint = ('model contains no variable names for the key'
-                                 +' \"'+str(group_name)+'\".')
-                    raise KeyError, complaint
-                model_var_names = self.model[group_name]
-                var_dim = None
-                for dim in xrange(len(model_var_names)):
-                    if model_var_names[dim] == name:
-                        var_dim = dim
-                        break
-                if var_dim is None:
-                    raise Exception, 'unable to find name '+str(name)
-                
-                m_info = CmeRecorder.MeasurementInfo(name, var_dim, output)
-                self.__dict__[group_name][name] = m_info
+        
+        if group_name not in self.model:
+            complaint = ('model contains no entry for the group name'
+                         +' \"'+str(group_name)+'\".')
+            raise KeyError, complaint
+        
+        self.group_names.add(group_name)
+        
+        if transforms is not None:
+            if len(transforms) != len(variable_names):
+                complaint = 'lengths of transforms and variable_names disagree'
+                raise ValueError, complaint
+        
+        for i, name in enumerate(variable_names):
+            # compute dim, the dimension this name corresponds to
+            # we do this by linearly searching through the names listed
+            # by the model for this group (reaction / species).
+            model_var_names = self.model[group_name]
+            var_dim = None
+            for dim in xrange(len(model_var_names)):
+                if model_var_names[dim] == name:
+                    var_dim = dim
+                    break
+            if var_dim is None:
+                complaint = (('model[\'%s\'] does not contain'%group_name) +
+                             (' the variable name \'%s\''%name))
+                raise KeyError, complaint 
+            
+            m_info = MeasurementInfo(name, outputs)
+            
+            if transforms is not None:
+                m_info.set_transform(transforms[i])
+            else:
+                m_info.set_dim(var_dim)
+            
+            if group_name not in self._measurements:
+                self._measurements[group_name] = {}
+            self._measurements[group_name][name] = m_info
                                                                   
                                                                   
     
-    def __compute(self,
-                  group_name,
-                  output_name,
-                  var_name,
-                  p_current,
-                  t_current):
+    def _compute(self,
+                group_name,
+                output_name,
+                var_name,
+                p_current,
+                t_current):
         
         key = (group_name, output_name, var_name)
+        m_info = self.get_measurement_info(group_name, var_name)
+        
         # if we've previously computed this measurement, just return that!
-        if key in self.__measurement_cache:
-            return self.__measurement_cache[key]
+        if key in self._measurement_cache:
+            return self._measurement_cache[key]
         else:
             # otherwise, we need to compute this measurement
             
-            # look up the measurer instance which we'll use to
-            # compute this measurements
-            measurer = self.measurers[(group_name, output_name)]
+            # determine the prerequisite measurements required to
+            # compute this one
+            marginal_key = (group_name,
+                            'marginal',
+                            var_name)
+            expected_value_key = (group_name,
+                                  'expected value',
+                                  var_name)
+            standard_deviation_key = (group_name,
+                                      'standard deviation',
+                                      var_name)
+            if output_name == 'marginal':
+                prereq_keys = set()
+            if output_name == 'expected value':
+                prereq_keys = set([marginal_key])
+            elif output_name == 'standard deviation':
+                prereq_keys = set([marginal_key,
+                                   expected_value_key])
             
-            # determine the pre-requisite measurements required to
-            # compute this one, by querying the measurer instance
-            prereq_keys = measurer.get_prereq_keys(var_name)
             
-            # check to see if the pre-reqs were already computed - if they
+            # check to see if the prerequisites were already computed - if they
             # weren't, we recursively compute them
             for prereq_key in prereq_keys:
-                if prereq_key not in self.__measurement_cache:
+                if prereq_key not in self._measurement_cache:
                     prereq_group, prereq_output, prereq_var = prereq_key
-                    self.__compute(prereq_group,
-                                   prereq_output,
-                                   prereq_var,
-                                   p_current,
-                                   t_current)
+                    self._compute(prereq_group,
+                                  prereq_output,
+                                  prereq_var,
+                                  p_current,
+                                  t_current)
                 
-                assert (prereq_key in self.__measurement_cache)
+                assert (prereq_key in self._measurement_cache)
             
-            # since all the pre-reqs are computed, we can now use the
-            # measurer to compute this measurement
-            # n.b. measurement_cache is passed, which contains all the
-            # pre-req measurements required for this operation.
-            measurement = measurer.compute(var_name,
-                                           t_current,
-                                           p_current,
-                                           self.__measurement_cache)
-            self.__measurement_cache[key] = measurement
+            # since all the pre-reqs are computed, we can now compute this
+            # measurement
+            if output_name == 'marginal':
+                marginal = m_info.compute_marginal(p_current,
+                                                   self.args['norigin'])
+                measurement = marginal
+            elif output_name == 'expected value':
+                marginal = self._measurement_cache[marginal_key]
+                expected_value = marginal.expected_value()
+                measurement = expected_value
+            elif output_name == 'standard deviation':
+                marginal = self._measurement_cache[marginal_key]
+                expected_value = self._measurement_cache[expected_value_key]
+                standard_deviation = marginal.standard_deviation(expected_value)
+                measurement = expected_value = standard_deviation
+        
+        self._measurement_cache[key] = measurement
         return measurement
                 
     
@@ -216,19 +234,19 @@ class CmeRecorder(object):
         # some measurements have pre-req measurements, which in general
         # are not wanted by the user, so we cache them here for the
         # duration of this call
-        self.__measurement_cache = {}
+        self._measurement_cache = {}
         for group_name in self.group_names:
-            for var_name in self.__dict__[group_name]:
-                m_info = self.__dict__[group_name][var_name]
+            for var_name in self._measurements[group_name]:
+                m_info = self._measurements[group_name][var_name]
                 m_info.times.append(t)
-                for output_name in m_info.target_output:
-                    measurement = self.__compute(group_name,
-                                                 output_name,
-                                                 var_name,
-                                                 p,
-                                                 t)
+                for output_name in m_info.target_outputs:
+                    measurement = self._compute(group_name,
+                                                output_name,
+                                                var_name,
+                                                p,
+                                                t)
                     m_info.add_measurement(output_name, measurement)
-        self.__measurement_cache = None
+        self._measurement_cache = None
                 
     
     def measurements(self, group_name):
@@ -241,6 +259,6 @@ class CmeRecorder(object):
         group_name : name of a group previously mentioned by a add_target
             call.
         """
-        for var_name in self.__dict__[group_name]:
-            measurement_info = self.__dict__[group_name][var_name]
+        for var_name in self._measurements[group_name]:
+            measurement_info = self._measurements[group_name][var_name]
             yield measurement_info

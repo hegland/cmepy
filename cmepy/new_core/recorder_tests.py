@@ -24,8 +24,11 @@ class RecorderTests(unittest.TestCase):
                  'species' : species}
         
         recorder = cmepy.new_core.recorder.CmeRecorder(model)
-        recorder.add_target(species = model['species'],
-                            output = ['expectation'])
+        
+        recorder.add_target('species',
+                            outputs = ['expected value', 'marginal'],
+                            variable_names = model['species'],
+                            transforms = model['species counts'])
         
         dummy_p = numpy.indices(inflated_shape)[1]
         
@@ -40,10 +43,9 @@ class RecorderTests(unittest.TestCase):
             assert measurement is not None
             assert len(measurement.times) == 1
             assert measurement.times[0] == 0.0
-            assert len(measurement.expectation) == 1
-            
+            assert len(measurement.expected_value) == 1            
             goal_expectation = goals[measurement.name]
-            assert_almost_equal(measurement.expectation[0],
+            assert_almost_equal(measurement.expected_value[0],
                                 goal_expectation)
         
 def suite():

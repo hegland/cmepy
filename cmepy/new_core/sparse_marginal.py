@@ -45,7 +45,7 @@ def create_sparse_marginal(f, p, norigin=None):
     
     return sparse_marginal.compress().sum_duplicates()
 
-def SparseMarginal(object):
+class SparseMarginal(object):
     def __init__(self, keys, values):
         assert len(keys) == len(values)
         self.keys = keys
@@ -57,9 +57,9 @@ def SparseMarginal(object):
         
         returns self
         """
-        small_indices = numpy.abs(self.values)<=epsilon
-        self.keys = self.keys[small_indices]
-        self.values = self.values[small_indices]
+        large_value_indices = numpy.abs(self.values)>epsilon
+        self.keys = self.keys[large_value_indices]
+        self.values = self.values[large_value_indices]
         return self
     
     def sum_duplicates(self):
