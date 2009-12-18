@@ -2,7 +2,17 @@ import numpy
 import scipy.sparse
 
 def _join_arrays(arrays):
-    return numpy.append(arrays[0], arrays[1:])
+    net_size = 0
+    for a in arrays:
+        net_size += numpy.size(a)
+    
+    result = numpy.zeros((net_size, ), dtype = arrays[0].dtype)
+    i = 0
+    for a in arrays:
+        size = numpy.size(a)
+        result[i:i+size] = a
+        i += size
+    return result
 
 class Accumulator(object):
     def __init__(self):
@@ -16,12 +26,16 @@ class Accumulator(object):
                         row_offset,
                         col_offset,
                         block_size):
+       
+        assert (block_size >= 0)
+        if block_size == 0:
+            return
         
         block_rows, block_cols = numpy.indices(numpy.shape(block))
         block_rows = numpy.ravel(block_rows) + row_offset
         block_cols = numpy.ravel(block_cols) + col_offset
         block_vals = numpy.ravel(block)
-        block_support = (block != 0.0)
+        block_support = numpy.ravel(block != 0.0)
         self.rows.append(block_rows[block_support])
         self.cols.append(block_cols[block_support])
         self.vals.append(block_vals[block_support])
@@ -33,8 +47,12 @@ class Accumulator(object):
                         col_offset,
                         block_size):
         
-        self.rows.append(block.rows + row_offset)
-        self.cols.append(block.cols + col_offset)
+        assert (block_size >= 0)
+        if block_size == 0:
+            return
+        
+        self.rows.append(block.row + row_offset)
+        self.cols.append(block.col + col_offset)
         self.vals.append(block.data)
         self.size += block_size
     
@@ -43,7 +61,7 @@ class Accumulator(object):
         cols = _join_arrays(self.cols)
         vals = _join_arrays(self.vals)
         shape = (self.size, self.size)
-        return scipy.sparse.coo_matrix(vals, (rows, cols), shape)
+        return scipy.sparse.coo_matrix((vals, (rows, cols)), shape)
 
 def from_sparse_matrix(a):
     """
@@ -142,13 +160,18 @@ def map(block_diagonal_matrix, f):
     return result
 
 def expm(block_diagonal_matrix, t):
+    """
+    XXX TODO BUG : THIS DOESNT HANDLE ZEROS ALONG THE DIAGONAL PROPERLY
+    CLEANEST WAY IS PROBABLY TO ADD THEM IN IN THE BLOCK DIAG CREATION
+    ROUTINE 'from_sparse_matrix'
+    """
     def _expm_block(start, end, data):
-        data_dense = data.todense()
-        exp = scipy.linalg.expm(data_dense*t)
+        data_dense = data.todense()*t
+        exp = scipy.linalg.expm(data_dense, q = 7)
         return start, end, scipy.sparse.coo_matrix(exp)
     return map(block_diagonal_matrix, _expm_block)
 
-def svd(block_diagonal_matrix):
+def block_svd(block_diagonal_matrix):
     def _svd_block(start, end, data):
         data_dense = data.todense()
         u, s, vh = scipy.linalg.svd(data_dense)
@@ -180,21 +203,19 @@ def svd_block_ks(block_diagonal_svd, k):
 
 def to_sparse(block_diagonal_matrix):
     accumulator = Accumulator()
-    for block_start, block_end, block_data in block_diagonal_matrix:
-        size = block_end - block_start
+    for block_start, block_size, block_data in block_diagonal_matrix:
         accumulator.add_coo_block(block_data,
                                   block_start,
                                   block_start,
                                   block_size)
-    return accumulator.to_coo_matrix(accumulator)
+    return accumulator.to_coo_matrix()
     
 def to_sparse_rank_k_approx(block_diagonal_svd, k):
     block_ks = svd_block_ks(block_diagonal_svd, k)
     f_accumulator = Accumulator()
     e_accumulator = Accumulator()
     for block_k, svd_block in itertools.izip(block_ks, block_diagonal_svd):
-        start, end, (u, s, vh) = svd_block
-        size = (end-start)
+        start, size, (u, s, vh) = svd_block
         if block_k == 0:
             continue
         else:           
@@ -202,6 +223,6 @@ def to_sparse_rank_k_approx(block_diagonal_svd, k):
             e_block = numpy.dot(numpy.diag(s[:block_k]), vh[:block_k, :])
             f_accumulator.add_dense_block(f_block, start, start, size)
             e_accumulator.add_dense_block(e_block, start, start, size)
-    f_matrix = f_accumulator.to_coo_matrix(f_accumulator)
-    e_matrix = e_accumulator.to_coo_matrix(e_accumulator)
+    f_matrix = f_accumulator.to_coo_matrix()
+    e_matrix = e_accumulator.to_coo_matrix()
     return (e_matrix, f_matrix)
