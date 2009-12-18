@@ -8,24 +8,28 @@ import rank_approx
 import cmepy.new_core.cme_solver as cme_solver
 import cmepy.core.matrix_cme as matrix_cme
 
+def transform_coo_matrix_basis(coo_matrix, new_indices):
+    n, n = coo_matrix.shape
+    assert numpy.size(new_indices) == n
+    new_matrix_data = (coo_matrix.data,
+                       (new_indices[coo_matrix.row],
+                        new_indices[coo_matrix.col]))
+    return scipy.sparse.coo_matrix(new_matrix_data,
+                                   coo_matrix.shape)
+
 def create_nice_matrix(model, f=None):
     flux_data = cme_solver.create_flux_data(model)
     matrix = matrix_cme.gen_sparse_matrix(model['np'], flux_data)
     if f is not None:
         # change basis so that states are enumerated in order of increasing
         # value under the transform f
-        
         indices = numpy.arange((numpy.product(model['np'],)))
         states = [numpy.ravel(i) for i in numpy.indices(model['np'])]
         f_states = f(*states)
         new_order = numpy.argsort(f_states)
         new_indices = indices[new_order]
-        print str(new_indices)
-        
-        new_matrix_data = (matrix.data, (new_indices[matrix.row],
-                                         new_indices[matrix.col]))
-        matrix = scipy.sparse.coo_matrix(new_matrix_data,
-                                         shape = matrix.shape)
+                
+        matrix = transform_coo_matrix_basis(matrix, new_indices)
         
     return matrix
 
