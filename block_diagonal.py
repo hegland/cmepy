@@ -1,3 +1,4 @@
+import itertools
 import numpy
 import scipy.sparse
 
@@ -35,7 +36,7 @@ class Accumulator(object):
         block_rows = numpy.ravel(block_rows) + row_offset
         block_cols = numpy.ravel(block_cols) + col_offset
         block_vals = numpy.ravel(block)
-        block_support = numpy.ravel(block != 0.0)
+        block_support = (block_vals != 0.0)
         self.rows.append(block_rows[block_support])
         self.cols.append(block_cols[block_support])
         self.vals.append(block_vals[block_support])
@@ -61,6 +62,11 @@ class Accumulator(object):
         cols = _join_arrays(self.cols)
         vals = _join_arrays(self.vals)
         shape = (self.size, self.size)
+        # XXX TODO FIXME
+        # CANNOT CORRECTLY DETERMINE SHAPE IN THIS FASHION
+        # THIS IS A PROBLEM WITH THE BLOCK DIAGONAL DATA STRUCTURE
+        # THE BLOCK DIAGONAL DATA STRUCTURE NEEDS TO STORE THE CORRECT SHAPE
+        # SHOULD MAKE A CLASS FOR THE BLOCK DIAGONAL DATA STRUCTURE
         return scipy.sparse.coo_matrix((vals, (rows, cols)), shape)
 
 def from_sparse_matrix(a):
@@ -191,7 +197,7 @@ def svd_block_ks(block_diagonal_svd, k):
         block_indices = i*numpy.ones(numpy.shape(s), dtype=numpy.int)
         net_block_indices.append(block_indices)
     net_s = _join_arrays(net_s)
-    net_block_indices = join_arrays(net_block_indices)
+    net_block_indices = _join_arrays(net_block_indices)
     sort_indices = numpy.argsort(net_s)
     large_block_indices = net_block_indices[sort_indices[-k:]]
     

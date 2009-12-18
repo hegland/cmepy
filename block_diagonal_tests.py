@@ -6,6 +6,7 @@ import numpy.testing.utils
 import scipy.sparse
 import scipy.linalg
 
+
 import block_diagonal
 
 def random_block_diag_matrices(n, m):
@@ -29,12 +30,12 @@ def random_block_diag_matrices(n, m):
 
 class BlockDiagonalTests(unittest.TestCase):
     def setUp(self):
-        n = 20
+        self.n = 20
         m = 5
         runs = 30
         #self.matrices = [scipy.sparse.coo_matrix(numpy.array([[0.0]]))]
         self.matrices = []
-        for run, matrix in enumerate(random_block_diag_matrices(n, m)):
+        for run, matrix in enumerate(random_block_diag_matrices(self.n, m)):
             if run >= runs:
                 break
             self.matrices.append(matrix)
@@ -68,5 +69,24 @@ class BlockDiagonalTests(unittest.TestCase):
                 pylab.spy(numpy.abs(test_expm - goal_expm)>tol)
                 pylab.show()
                 break
+    
+    def testBlockDiagSVD(self):
+        for matrix in self.matrices:
+            # traditional dense routine
+            dense_matrix = matrix.todense()
+            k = numpy.random.randint(1, self.n+1)
+            print 'using rank k = '+str(k)
+            u, s, vh = scipy.linalg.svd(dense_matrix)
+            f_goal = u[:, :k]
+            e_goal = numpy.dot(numpy.diag(s[:k]), vh[:k, :])
+            
+            # new block diagonal routine
+            block_diag = block_diagonal.from_sparse_matrix(matrix)
+            block_diag_svd = block_diagonal.block_svd(block_diag)
+            test_approx = block_diagonal.to_sparse_rank_k_approx(block_diag_svd,
+                                                                 k)
+            e_test, f_test = test_approx
+            numpy.testing.utils.assert_almost_equal(e_test.todense(), e_goal)
+            numpy.testing.utils.assert_almost_equal(f_test.todense(), f_goal)
 if __name__ == '__main__':
     unittest.main()
