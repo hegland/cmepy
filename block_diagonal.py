@@ -172,9 +172,11 @@ def from_sparse_matrix(a):
         coo_data = (data[block_slice],
                     (row[block_slice]-block_start,
                      col[block_slice]-block_start))
+        coo_shape = (block_size, block_size)
+        coo_block = scipy.sparse.coo_matrix(coo_data, coo_shape)
         result.add_block(block_start,
                          block_size,
-                         scipy.sparse.coo_matrix(coo_data))
+                         coo_block)
         block_i = block_j+1
     return result
     
@@ -188,17 +190,28 @@ def map(block_diagonal_matrix, f):
     return result
 
 def expm(block_diagonal_matrix, t):
-    """
-    XXX TODO BUG : THIS DOESNT HANDLE ZEROS ALONG THE DIAGONAL PROPERLY
-    CLEANEST WAY IS PROBABLY TO ADD THEM IN IN THE BLOCK DIAG CREATION
-    ROUTINE 'from_sparse_matrix'
-    """
     def _expm_block(start, end, data):
         data_dense = data.todense()*t
+        shape = numpy.shape(data_dense)
+        if len(shape) != 2:
+            lament = 'expected sub-block dimension 2, received %d' % len(shape)
+            raise ValueError(lament)
+        if shape[0] != shape[1]:
+            lament = 'expected square sub-block shape, received %s' % str(shape)
+            raise ValueError(lament)
+        if shape[0] < 1:
+            lament = 'expected positive sub-block dimensions, received %s' % str(shape)
+            raise ValueError(lament)
         exp = scipy.linalg.expm(data_dense)
+        if not numpy.logical_and.reduce(numpy.ravel(numpy.isfinite(exp))):
+            lament = 'dense exponential of sub block * t is not finite'
+            raise ValueError(lament)
         return start, end, scipy.sparse.coo_matrix(exp)
     # ensure all 'zero blocks' along the diagonal are explicitly added
+    # this is necessary since exp(0*t) = exp(0) = 1
     block_diagonal_matrix.complete_zero_blocks()
+    # now apply expm to each sub block along the diagonal,
+    # including the zero blocks we just added (if any)
     return map(block_diagonal_matrix, _expm_block)
 
 def block_svd(block_diagonal_matrix):
@@ -209,6 +222,7 @@ def block_svd(block_diagonal_matrix):
     return map(block_diagonal_matrix, _svd_block)
 
 def svd_block_ks(block_diagonal_svd, k):
+    assert len(block_diagonal_svd.blocks)>0
     net_s = []
     net_block_indices = []
     
@@ -240,19 +254,26 @@ def to_sparse(block_diagonal_matrix):
     return accumulator.to_coo_matrix()
     
 def to_sparse_rank_k_approx(block_diagonal_svd, k):
+    assert len(block_diagonal_svd.shape) == 2
+    assert block_diagonal_svd.shape[0] == block_diagonal_svd.shape[1]
+    n, n = block_diagonal_svd.shape
+    f_shape = (n, k)
+    e_shape = (k, n)
     block_ks = svd_block_ks(block_diagonal_svd, k)
     block_svds = block_diagonal_svd.blocks
-    f_accumulator = Accumulator(block_diagonal_svd.shape)
-    e_accumulator = Accumulator(block_diagonal_svd.shape)
+    f_accumulator = Accumulator(f_shape)
+    e_accumulator = Accumulator(e_shape)
+    k_sub_total = 0
     for block_k, svd in itertools.izip(block_ks, block_svds):
         start, size, (u, s, vh) = svd
         if block_k == 0:
             continue
-        else:           
+        else:
             f_block = u[:, :block_k]
             e_block = numpy.dot(numpy.diag(s[:block_k]), vh[:block_k, :])
-            f_accumulator.add_dense_block(f_block, start, start)
-            e_accumulator.add_dense_block(e_block, start, start)
+            f_accumulator.add_dense_block(f_block, start, k_sub_total)
+            e_accumulator.add_dense_block(e_block, k_sub_total, start)
+            k_sub_total += block_k
     f_matrix = f_accumulator.to_coo_matrix()
     e_matrix = e_accumulator.to_coo_matrix()
     return (e_matrix, f_matrix)
