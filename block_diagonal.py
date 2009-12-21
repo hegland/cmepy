@@ -66,6 +66,39 @@ class BlockDiagonalMatrix(object):
     def add_block(self, start, size, data):
         self.blocks.append((start, size, data))
     
+    def add_zero_blocks(self, start, number):
+        for i in xrange(number):
+            data = scipy.sparse.coo_matrix((1, 1))
+            self.blocks.append((start+i, 1, data))
+    
+    def complete_zero_blocks(self):
+        block_starts = []
+        block_ends = []
+        for start, size, data in self.blocks:
+            block_starts.append(start)
+            block_ends.append(start+size-1)
+        
+        block_starts = numpy.array(block_starts)
+        block_ends = numpy.array(block_ends)
+        block_ordering = numpy.argsort(block_starts)
+        block_starts = block_starts[block_ordering]
+        block_ends = block_ends[block_ordering]
+        
+        # initial gap, if any
+        if block_starts[0] > 0:
+            self.add_zero_blocks(0, block_starts[0])
+        # middle gaps, if any
+        for prev_end, curr_start in itertools.izip(block_ends[:-1],
+                                                   block_starts[1:]):
+            if curr_start > prev_end+1:
+                self.add_zero_blocks(prev_end+1,
+                                     curr_start-prev_end-1)
+        # final gap, if any
+        n = min(self.shape[0], self.shape[1])
+        if block_ends[-1] < n-1:
+            self.add_zero_blocks(block_ends[-1]+1,
+                                 n-1-block_ends[-1])
+        
 def from_sparse_matrix(a):
     """
     determines the block-diagonal structure of a
@@ -161,6 +194,8 @@ def expm(block_diagonal_matrix, t):
         data_dense = data.todense()*t
         exp = scipy.linalg.expm(data_dense)
         return start, end, scipy.sparse.coo_matrix(exp)
+    # ensure all 'zero blocks' along the diagonal are explicitly added
+    block_diagonal_matrix.complete_zero_blocks()
     return map(block_diagonal_matrix, _expm_block)
 
 def block_svd(block_diagonal_matrix):
