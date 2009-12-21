@@ -16,21 +16,19 @@ def _join_arrays(arrays):
     return result
 
 class Accumulator(object):
-    def __init__(self):
+    def __init__(self, shape):
+        assert shape is not None
+        assert len(shape) == 2
+        assert not (shape[0]<0 or shape[1]<0)
+        self.shape = shape
         self.rows = []
         self.cols = []
         self.vals = []
-        self.size = 0
     
     def add_dense_block(self,
                         block,
                         row_offset,
-                        col_offset,
-                        block_size):
-       
-        assert (block_size >= 0)
-        if block_size == 0:
-            return
+                        col_offset):
         
         block_rows, block_cols = numpy.indices(numpy.shape(block))
         block_rows = numpy.ravel(block_rows) + row_offset
@@ -40,35 +38,34 @@ class Accumulator(object):
         self.rows.append(block_rows[block_support])
         self.cols.append(block_cols[block_support])
         self.vals.append(block_vals[block_support])
-        self.size += block_size
     
     def add_coo_block(self,
                         block,
                         row_offset,
-                        col_offset,
-                        block_size):
-        
-        assert (block_size >= 0)
-        if block_size == 0:
-            return
+                        col_offset):
         
         self.rows.append(block.row + row_offset)
         self.cols.append(block.col + col_offset)
         self.vals.append(block.data)
-        self.size += block_size
     
     def to_coo_matrix(self):
         rows = _join_arrays(self.rows)
         cols = _join_arrays(self.cols)
         vals = _join_arrays(self.vals)
-        shape = (self.size, self.size)
-        # XXX TODO FIXME
-        # CANNOT CORRECTLY DETERMINE SHAPE IN THIS FASHION
-        # THIS IS A PROBLEM WITH THE BLOCK DIAGONAL DATA STRUCTURE
-        # THE BLOCK DIAGONAL DATA STRUCTURE NEEDS TO STORE THE CORRECT SHAPE
-        # SHOULD MAKE A CLASS FOR THE BLOCK DIAGONAL DATA STRUCTURE
-        return scipy.sparse.coo_matrix((vals, (rows, cols)), shape)
+        return scipy.sparse.coo_matrix((vals, (rows, cols)), self.shape)
 
+class BlockDiagonalMatrix(object):
+    def __init__(self, shape):
+        assert shape is not None
+        assert len(shape) == 2
+        assert not (shape[0]<0 or shape[1]<0)
+        self.shape = shape
+        
+        self.blocks = []
+    
+    def add_block(self, start, size, data):
+        self.blocks.append((start, size, data))
+    
 def from_sparse_matrix(a):
     """
     determines the block-diagonal structure of a
@@ -102,13 +99,13 @@ def from_sparse_matrix(a):
     num_entries = numpy.size(data)
     
     if num_entries == 0:
-        return []
+        return BlockDiagonalMatrix(a.shape)
     
     # min and max coords
     min_coord = numpy.minimum(row, col)
     max_coord = numpy.maximum(row, col)
     
-    # argsort all entry data with respect to increasing min coord
+    # reorder entries with respect to increasing min coord
     min_coord_order = numpy.argsort(min_coord)
     
     row = row[min_coord_order]
@@ -117,52 +114,41 @@ def from_sparse_matrix(a):
     min_coord = min_coord[min_coord_order]
     max_coord = max_coord[min_coord_order]
     
-    # process entries one by one
-    # idea : use a moving window along the diagonal,
-    # from block_start to block_end. entries contribute to the block
-    # containing the interval [min_coord, max_coord] along the diagonal
+    # determine indices where blocks end
+    accum_max = numpy.maximum.accumulate(max_coord)
+    end_block = numpy.zeros(numpy.shape(accum_max))
+    end_block[-1] = True
+    end_block[:-1] = accum_max[:-1] < min_coord[1:]
+    end_block_indices = numpy.nonzero(end_block)[0]
     
-    block_start = 0
-    block_end = 0
-    j = 0
-    blocks = []
-
-    for i in xrange(num_entries):
-        entry_start = min_coord[i]
-        entry_end = max_coord[i]
-        
-        if entry_start <= block_end:
-            if entry_end > block_end:
-                block_end = entry_end
-        else:
-            if i > j:
-                # finalise previous block
-                block_data = (data[j:i],
-                              (row[j:i]-block_start,
-                               col[j:i]-block_start))
-                blocks.append((block_start,
-                               block_end-block_start+1,
-                               scipy.sparse.coo_matrix(block_data)))
-            # commence new block
-            block_start = entry_start
-            block_end = entry_end
-            j = i
+    # partition entries into blocks, return as BlockDiagonalMatrix
+    result = BlockDiagonalMatrix(a.shape)
+    block_i = 0
+    for block_j in end_block_indices:
+        # block_start and block_end index where this block occurs
+        # along the diagonal of the original matrix a
+        block_start = min_coord[block_i]
+        block_end = accum_max[block_j]
+        block_size = 1 + block_end - block_start
+        # select the subset of the entries for this block and
+        # transform into coo matrix representation
+        block_slice = slice(block_i, block_j+1, None)
+        coo_data = (data[block_slice],
+                    (row[block_slice]-block_start,
+                     col[block_slice]-block_start))
+        result.add_block(block_start,
+                         block_size,
+                         scipy.sparse.coo_matrix(coo_data))
+        block_i = block_j+1
+    return result
     
-    # finalise last block
-    block_data = (data[j:],
-                  (row[j:]-block_start,
-                   col[j:]-block_start))
-    blocks.append((block_start,
-                   block_end-block_start+1,
-                   scipy.sparse.coo_matrix(block_data)))
     
-    return blocks
 
 
 def map(block_diagonal_matrix, f):
-    result = []
-    for block_start, block_end, block_data in block_diagonal_matrix:
-        result.append(f(block_start, block_end, block_data))
+    result = BlockDiagonalMatrix(block_diagonal_matrix.shape)
+    for block_start, block_end, block_data in block_diagonal_matrix.blocks:
+        result.add_block(*f(block_start, block_end, block_data))
     return result
 
 def expm(block_diagonal_matrix, t):
@@ -173,7 +159,7 @@ def expm(block_diagonal_matrix, t):
     """
     def _expm_block(start, end, data):
         data_dense = data.todense()*t
-        exp = scipy.linalg.expm(data_dense, q = 7)
+        exp = scipy.linalg.expm(data_dense)
         return start, end, scipy.sparse.coo_matrix(exp)
     return map(block_diagonal_matrix, _expm_block)
 
@@ -191,7 +177,7 @@ def svd_block_ks(block_diagonal_svd, k):
     # figure out how many s values to take from each block,
     # given that we are only interested in the k largest s values
     # over all blocks.
-    for i, svd_block in enumerate(block_diagonal_svd):
+    for i, svd_block in enumerate(block_diagonal_svd.blocks):
         start, end, (u, s, vh) = svd_block
         net_s.append(s)
         block_indices = i*numpy.ones(numpy.shape(s), dtype=numpy.int)
@@ -203,32 +189,32 @@ def svd_block_ks(block_diagonal_svd, k):
     
     # block_ks[i] = number of s values to take from the i-th svd block
     counts = numpy.bincount(large_block_indices)
-    block_ks = numpy.zeros((len(block_diagonal_svd), ), dtype=numpy.int)
+    block_ks = numpy.zeros((len(block_diagonal_svd.blocks), ), dtype=numpy.int)
     block_ks[:numpy.size(counts)] = counts
     return block_ks
 
 def to_sparse(block_diagonal_matrix):
-    accumulator = Accumulator()
-    for block_start, block_size, block_data in block_diagonal_matrix:
+    accumulator = Accumulator(block_diagonal_matrix.shape)
+    for block_start, block_size, block_data in block_diagonal_matrix.blocks:
         accumulator.add_coo_block(block_data,
                                   block_start,
-                                  block_start,
-                                  block_size)
+                                  block_start)
     return accumulator.to_coo_matrix()
     
 def to_sparse_rank_k_approx(block_diagonal_svd, k):
     block_ks = svd_block_ks(block_diagonal_svd, k)
-    f_accumulator = Accumulator()
-    e_accumulator = Accumulator()
-    for block_k, svd_block in itertools.izip(block_ks, block_diagonal_svd):
-        start, size, (u, s, vh) = svd_block
+    block_svds = block_diagonal_svd.blocks
+    f_accumulator = Accumulator(block_diagonal_svd.shape)
+    e_accumulator = Accumulator(block_diagonal_svd.shape)
+    for block_k, svd in itertools.izip(block_ks, block_svds):
+        start, size, (u, s, vh) = svd
         if block_k == 0:
             continue
         else:           
             f_block = u[:, :block_k]
             e_block = numpy.dot(numpy.diag(s[:block_k]), vh[:block_k, :])
-            f_accumulator.add_dense_block(f_block, start, start, size)
-            e_accumulator.add_dense_block(e_block, start, start, size)
+            f_accumulator.add_dense_block(f_block, start, start)
+            e_accumulator.add_dense_block(e_block, start, start)
     f_matrix = f_accumulator.to_coo_matrix()
     e_matrix = e_accumulator.to_coo_matrix()
     return (e_matrix, f_matrix)
