@@ -10,21 +10,33 @@ import cmepy.new_core.recorder as cme_recorder
 
 import cmepy.core.matrix_cme as matrix_cme
 import perturb
+import block_diagonal
 
-def cached_svd_trunc(matrix, k, cache={}):
-    if len(cache)==0:
-        (k_max, k_max) = numpy.shape(matrix)
-        u, s, vh = perturb.truncated_svd(matrix, k_max)
-        cache['u'] = u
-        cache['s'] = s
-        cache['vh'] = vh
-    
-    u_bar = cache['u'][:, :k]
-    s_bar = cache['s'][:k]
-    vh_bar = cache['vh'][:k, :]
-    
-    return u_bar, s_bar, vh_bar
-    
+def create_change_of_basis_matrices(permutation):
+    n = numpy.size(permutation)
+    forward_row = numpy.array(permutation)
+    forward_col = numpy.arange(n)
+    forward_val = numpy.ones((n, ))
+    forward = scipy.sparse.coo_matrix(forward_val,
+                                      (forward_row,
+                                       forward_col)).tocsr()
+    inverse_row = numpy.arange(n)
+    inverse_col = numpy.array(permutation)
+    inverse_val = numpy.ones((n, ))
+    inverse = scipy.sparse.coo_matrix(inverse_val,
+                                      (inverse_row,
+                                       inverse_col)).tocsr()
+    return (forward, inverse)
+
+def create_ordered_basis(model, f):
+    # change basis so that states are enumerated in order of increasing
+    # value under the transform f
+    indices = numpy.arange((numpy.product(model['np'],)))
+    states = [numpy.ravel(i) for i in numpy.indices(model['np'])]
+    f_states = f(*states)
+    new_order = numpy.argsort(f_states)
+    basis_permutation = indices[new_order]
+    return basis_permutation    
 
 def approx_cme_solver(full_model,
                       slow_reactions,
@@ -47,33 +59,26 @@ def approx_cme_solver(full_model,
     
     print 'shape of fast_matrix : %s' % str(fast_matrix.shape)
     
+    # compute change of basis so that fast_matrix will be block diagonal
+    # to do this we index states wrt their x[0], x[2], x[1] ordering
+    
+    np = full_model['np']
+    f = lambda *x : (numpy.product(np[1:])*x[0]
+                     + numpy.product(np[1])*x[2]
+                     + x[1])
+    
+    block_diag_basis = create_ordered_basis(fast_model, f)
+    beta, beta_inverse = create_change_of_basis_matrices(block_diag_basis)
+    
+    bd_fast = block_diagonal.from_sparse_matrix(beta*fast_matrix)
+    bd_svd_fast = block_diagonal.block_svd(bd_fast)
     # m := limit of exp(fast_matrix *t) as t --> +ive infty
     # approximate limit by using a large T
     T_INFTY = 100000.0
-    dense_fast_matrix = fast_matrix.todense()
-    m_matrix = scipy.linalg.expm(dense_fast_matrix*T_INFTY)
-    
-    # compute truncated svd of k largest singular values
-    u_bar, s_bar, v_bar = cached_svd_trunc(m_matrix, k)
-    
-    print '  dumping s_bar info:'
-    s_bar_acc = numpy.add.accumulate(s_bar)
-    tol = 1.0e-15
-    tail_indices = s_bar_acc + tol >= s_bar_acc[-1] 
-    last_head_index = (numpy.nonzero(tail_indices)[0])[0]
-    print '\tlast_head_index %d' % last_head_index
-    s_view_radius = 5
-    s_view_lo = max(0, last_head_index - s_view_radius)
-    s_view_hi = min(numpy.size(tail_indices), last_head_index + s_view_radius)
-    for i in xrange(s_view_lo, s_view_hi):
-        print '\ts[%d] = %f' % (i, s_bar[i])
-    
-     
-    # use svd to compute aggregation and disaggregation matrices
-    f = u_bar
-    f_sparse = scipy.sparse.csr_matrix(f)
-    e = numpy.dot(numpy.diag(s_bar), v_bar)
-    e_sparse = scipy.sparse.csr_matrix(e)
+    bd_m = block_diagonal.expm(bd_fast, T_INFTY)
+
+    # compute rank k approx
+    (e_sparse, f_sparse) = block_diagonal.to_sparse_rank_k_approx(bd_m, k)
     
     # define initial distribution as system with
     # maximum copies of first species and 0 copies of second species
@@ -81,23 +86,16 @@ def approx_cme_solver(full_model,
         p_0 = numpy.zeros(full_model['np'])
         p_0[-1, 0] = 1.0
     
-    a_hat = numpy.dot(e, slow_matrix*f)
+    a_hat = numpy.dot(e, (beta*slow_matrix)*f)
     a_hat_sparse = scipy.sparse.csr_matrix(a_hat)
-    
-    #print 'f : '
-    #print str(f)
-    #print 'e : '
-    #print str(e)
-    #print 'a hat:'
-    #print str(a_hat)
     
     pack, unpack = cme_solver.create_packing_functions(fast_model)
     
     def pack_aggregate(p):
-        return e_sparse*pack(p)
+        return e_sparse*beta*pack(p)
     
     def deaggregate_unpack(y):
-        return unpack(f_sparse*y)
+        return unpack(beta_inverse*f_sparse*y)
     
     def dy_dt(t, y):
         return a_hat_sparse*y
@@ -150,11 +148,10 @@ def test(graph = False):
     p_0 = numpy.zeros(model['np'])
     p_0[-1, -1, 0] = 1.0
     
-    #k_range_coarse = [1764, 504, 475, 450, 425, 400, 375, 350, 325, 300, 275, 250]
-    
+    k_range_coarse = [1764, 504, 475, 450, 425, 400, 375, 350, 325, 300, 275, 250]
     k_range_fine = numpy.linspace(350, 500, (500-350)/5 + 1)
     
-    for k in k_range_fine:
+    for k in k_range_coarse:
         solver = approx_cme_solver(model,
                                    slow_reactions,
                                    fast_reactions,

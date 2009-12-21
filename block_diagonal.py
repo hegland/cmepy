@@ -72,6 +72,9 @@ class BlockDiagonalMatrix(object):
             self.blocks.append((start+i, 1, data))
     
     def complete_zero_blocks(self):
+        if len(self.blocks)==0:
+            return self
+        
         block_starts = []
         block_ends = []
         for start, size, data in self.blocks:
@@ -98,7 +101,7 @@ class BlockDiagonalMatrix(object):
         if block_ends[-1] < n-1:
             self.add_zero_blocks(block_ends[-1]+1,
                                  n-1-block_ends[-1])
-        
+        return self
 def from_sparse_matrix(a):
     """
     determines the block-diagonal structure of a
