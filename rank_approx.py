@@ -12,35 +12,6 @@ import cmepy.core.matrix_cme as matrix_cme
 import perturb
 import block_diagonal
 
-def create_change_of_basis_matrices(permutation):
-    n = numpy.size(permutation)
-    shape = (n, )*2
-    forward_row = numpy.array(permutation)
-    forward_col = numpy.arange(n)
-    forward_val = numpy.ones((n, ))
-    forward = scipy.sparse.coo_matrix((forward_val,
-                                      (forward_row,
-                                       forward_col)),
-                                       shape).tocsr()
-    inverse_row = numpy.arange(n)
-    inverse_col = numpy.array(permutation)
-    inverse_val = numpy.ones((n, ))
-    inverse = scipy.sparse.coo_matrix((inverse_val,
-                                      (inverse_row,
-                                       inverse_col)),
-                                       shape).tocsr()
-    return (forward, inverse)
-
-def create_ordered_basis(model, f):
-    # change basis so that states are enumerated in order of increasing
-    # value under the transform f
-    indices = numpy.arange((numpy.product(model['np'],)))
-    states = [numpy.ravel(i) for i in numpy.indices(model['np'])]
-    f_states = f(*states)
-    new_order = numpy.argsort(f_states)
-    basis_permutation = indices[new_order]
-    return basis_permutation    
-
 def approx_cme_solver(full_model,
                       slow_reactions,
                       fast_reactions,
@@ -62,31 +33,12 @@ def approx_cme_solver(full_model,
     fast_matrix *= epsilon
     fast_matrix = fast_matrix.tocsr()
     
-    """
-    # compute change of basis so that fast_matrix will be block diagonal
-    # to do this we index states wrt their x[0], x[2], x[1] ordering
-    
-    np = full_model['np']
-    state_ordering = lambda *x : (numpy.product(np[1:])*x[0]
-                                  + numpy.product(np[1])*x[2]
-                                  + x[1])
-    
-    block_diag_basis = create_ordered_basis(fast_model, state_ordering)
-    beta, beta_inverse = create_change_of_basis_matrices(block_diag_basis)
-    
-    import pylab
-    pylab.figure()
-    pylab.spy(beta.todense())
-    pylab.figure()
-    pylab.spy(beta_inverse.todense())
-    pylab.show()
-    """
-    
-    #print 'beta : %s' % repr(beta)
     print 'fast_matrix : %s' % repr(fast_matrix)
     
     bd_fast = block_diagonal.from_sparse_matrix(fast_matrix)
-    #bd_fast = block_diagonal.from_sparse_matrix(beta*fast_matrix)
+    print 'fast matrix block diagonal details:'
+    for i, (start, size, block) in enumerate(bd_fast.blocks):
+        print 'block %d - start %d, size %d' % (i, start, size)
     
     
     # m := limit of exp(fast_matrix *t) as t --> +ive infty
@@ -97,7 +49,7 @@ def approx_cme_solver(full_model,
     assert len(bd_m.blocks)>0
     for (start, size, block) in bd_m.blocks:
         if not numpy.logical_and.reduce(numpy.ravel(numpy.isfinite(block.data))):
-            print 'sub block contains nonfinite elements :('
+            print 'sub block contains non-finite elements :('
             print 'block start : %d' % start
             print 'block size : %d' % size
             print str(block.data)
@@ -136,7 +88,7 @@ def approx_cme_solver(full_model,
     new_solver.set_packing(pack_aggregate,
                            deaggregate_unpack,
                            transform_dy_dt=False)
-    return new_solver
+    return new_solver, a_hat
 
 def get_catalyser_model(initial_s_count, initial_e_count, epsilon):
     species = ('S', 'E', 'C', 'D')
@@ -171,8 +123,8 @@ def test(graph = False):
     """
     
     epsilon = 0.1
-    s_0 = 20
-    e_0 = 3
+    s_0 = 40
+    e_0 = 6
     model, slow_reactions, fast_reactions = get_catalyser_model(s_0,
                                                                 e_0,
                                                                 epsilon)
@@ -180,16 +132,19 @@ def test(graph = False):
     p_0 = numpy.zeros(model['np'])
     p_0[-1, -1, 0] = 1.0
     
-    k_range_coarse = [1764, 504, 475, 450, 425, 400, 375, 350, 325, 300, 275, 250]
-    k_range_fine = numpy.linspace(350, 500, (500-350)/5 + 1)
-    
-    for k in k_range_fine:
-        solver = approx_cme_solver(model,
+    # these are interesting values for s_0 = 20; e_0 = 3
+    #k_range_coarse = [1764, 504, 475, 450, 425, 400, 375, 350, 325, 300, 275, 250]
+    #k_range_fine = numpy.linspace(350, 500, (500-350)/5 + 1)
+    k_range_interesting = [1000, 1500, 2000]
+    k_range_single = [2000]
+    for k in k_range_single:
+        result = approx_cme_solver(model,
                                    slow_reactions,
                                    fast_reactions,
                                    epsilon,
                                    k,
                                    p_0)
+        solver, a_hat = result
         
         recorder = cme_recorder.CmeRecorder(model)
         recorder.add_target('species',
@@ -225,6 +180,14 @@ def test(graph = False):
             pylab.savefig('sd_rank_%d_approx.png' % k)
             pylab.close()
             
+            pylab.figure()
+            pylab.imshow(a_hat.todense(),
+                         interpolation='nearest',
+                         cmap=pylab.cm.jet)
+            pylab.title(title+'a_hat spy plot')
+            pylab.savefig('spy_rank_%d_approx.png' % k)
+            pylab.close()
+
 def profile():
     import cProfile, pstats
     PROFILE_FILE = 'rank_approx.profile'
