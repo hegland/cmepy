@@ -64,6 +64,23 @@ class BlockDiagonalMatrix(object):
         
         self.blocks = []
     
+    def add_block_diagonal(self, start, size, other):
+        """
+        add another block diagonal matrix to this one, using the
+        given start as an offset ...
+        
+        (copies the blocks contained in the other block
+        diagonal matrix and adds them as new blocks to this
+        block diagonal matrix)
+        """
+        for block_start, block_size, block_data in other.blocks:
+            block_row = numpy.array(block_data.row)
+            block_col = numpy.array(block_data.col)
+            block_val = numpy.array(block_data.data)
+            data = scipy.sparse.coo_matrix((block_val, (block_row, block_col)),
+                                            block_data.shape)
+            self.blocks.append((start+block_start, block_size, data))
+    
     def add_block(self, start, size, data):
         self.blocks.append((start, size, data))
     
@@ -103,6 +120,9 @@ class BlockDiagonalMatrix(object):
             self.add_zero_blocks(block_ends[-1]+1,
                                  n-1-block_ends[-1])
         return self
+    def __repr__(self):
+        repr = '<%dx%d block diagonal matrix with %d stored sub blocks>' % (self.shape[0], self.shape[1], len(self.blocks))
+        return repr
 def from_sparse_matrix(a):
     """
     determines the block-diagonal structure of a
