@@ -1,3 +1,6 @@
+import numpy
+import scipy.sparse
+
 def create_change_of_basis_matrices(permutation):
     n = numpy.size(permutation)
     shape = (n, )*2
@@ -20,12 +23,10 @@ def create_change_of_basis_matrices(permutation):
 def create_ordered_basis(model, f):
     # change basis so that states are enumerated in order of increasing
     # value under the transform f
-    indices = numpy.arange((numpy.product(model['np'],)))
     states = [numpy.ravel(i) for i in numpy.indices(model['np'])]
     f_states = f(*states)
-    new_order = numpy.argsort(f_states)
-    basis_permutation = indices[new_order]
-    return basis_permutation    
+    permutation = numpy.argsort(f_states)
+    return permutation    
 
 """
 # compute change of basis so that fast_matrix will be block diagonal

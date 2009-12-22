@@ -6,7 +6,7 @@ import numpy
 import scipy.sparse
 from cmepy.core.core_cme import process_offset_vectors, gen_reaction_actions
 
-def gen_sparse_matrix(np, reaction_actions):
+def gen_sparse_matrix(np, reaction_actions, state_permutation=None):
     """
     Generates a scipy.sparse.coo_matrix for the given model np and
     reaction_actions.
@@ -14,6 +14,11 @@ def gen_sparse_matrix(np, reaction_actions):
     
     num_states = numpy.product(np)
     flat_states = numpy.arange(num_states)
+    
+    # optionally, permute default indexing scheme using provided
+    # state_permutation index array
+    if state_permutation is not None:
+        flat_states = flat_states[state_permutation]
     inflated_states = numpy.reshape(flat_states, np)
     
     matrix_rows = numpy.array(())
