@@ -1,6 +1,7 @@
 import itertools
 import numpy
 import scipy.sparse
+import scipy.linalg
 
 def _join_arrays(arrays):
     net_size = 0

@@ -2,7 +2,11 @@ import numpy
 import scipy.sparse
 
 import cmepy.core.matrix_cme as matrix_cme
+import cmepy.new_core.ode_solver as ode_solver
 import cmepy.new_core.cme_solver as cme_solver
+import cmepy.new_core.recorder as cme_recorder
+
+import block_diagonal
 
 def get_catalyser_models(initial_s_count, initial_e_count, epsilon):
     species = ('S', 'E', 'C', 'D')
@@ -25,7 +29,7 @@ def get_catalyser_models(initial_s_count, initial_e_count, epsilon):
     
     slow_model = {'propensities' : propensities[:-1],
                   'offset_vectors' : offset_vectors[:-1],
-                  'np' : np[:-1]}
+                  'np' : np}
     
     fast_model = {'propensities' : (lambda *x : epsilon*x[1], ),
                   'offset_vectors' : ((1, -1), ),
@@ -41,14 +45,10 @@ def create_indexing(np, f):
     inverse_permutation = numpy.argsort(permutation)
     return permutation, inverse_permutation
 
-def main():
+def create_cme_solver(initial_s_count, initial_e_count, epsilon):
     # ==========================================================================
     # define model & decomposition into slow and fast models
-    # ==========================================================================
-    initial_s_count = 10
-    initial_e_count = 3
-    epsilon = 0.01
-    
+    # ==========================================================================    
     full_model, slow_model, fast_model = get_catalyser_models(initial_s_count,
                                                               initial_e_count,
                                                               epsilon)
@@ -105,13 +105,15 @@ def main():
     assert num_slow_states == numpy.product(slow_model['np'])
     temp_fast = numpy.repeat(numpy.arange(num_fast_states), duplication)
     temp_slow = numpy.arange(num_slow_states)
+    # d is acting like a de aggregation matrix. "d for de-aggregation"
     d = scipy.sparse.coo_matrix((numpy.ones((num_slow_states, )),
-                                 (numpy.array(temp_fast),
-                                  numpy.array(temp_slow))),
-                                (num_slow_states, num_fast_states))
-    d_tilde = scipy.sparse.coo_matrix((numpy.ones((num_slow_states, ))/duplication,
                                  (numpy.array(temp_slow),
                                   numpy.array(temp_fast))),
+                                (num_slow_states, num_fast_states))
+    # d_tilde is acting like an aggregation matrix.
+    d_tilde = scipy.sparse.coo_matrix((numpy.ones((num_slow_states, ))/duplication,
+                                 (numpy.array(temp_fast),
+                                  numpy.array(temp_slow))),
                                 (num_fast_states, num_slow_states))
     d = d.tocsr()
     d_tilde = d_tilde.tocsr()
@@ -126,11 +128,114 @@ def main():
     # xxx todo this is a bit of a hack to compute the limit as t goes to infty
     # if too large a time is used the sparse block diagonal expm routine
     # will a bit upset by infinities popping up in sub blocks and
-    # start returing nan entries ...
-    T_INFTY = 1000.0
+    # start returning nan entries ...
+    t_infty = 1000.0
     bd_fast = block_diagonal.from_sparse_matrix(fast_matrix)
-    bd_m = block_diagonal.expm(bd_fast, T_INFTY)
-    m = block_diagonal.to_sparse()
+    bd_m = block_diagonal.expm(bd_fast, t_infty)
+    m = block_diagonal.to_sparse(bd_m).tocsr()
+    
+    # ==========================================================================
+    # define initial conditions, differential equations, and packing functions
+    # ==========================================================================
+    
+    # initialise system with maximal copies of S & E, zero copies of C & D
+    p_0 = numpy.zeros(slow_model['np'])
+    p_0[-1, -1, 0] = 1.0
+    
+    # define differential equations in terms of fast reaction indexing scheme
+    
+    # xxx todo this approach is flawed
+    # need to have a separate copy of the (reduced) fast matrix
+    # for each state S ...
+    # ie needs to be some kind of outer product construction here
+    # instead of just matrices d, d_tilde
+    a_hat = m*d_tilde*slow_matrix*d
+    def dy_dt(t, y):
+        return a_hat*y
+    
+    # flatten p
+    # permute ordering to match slow indexing scheme
+    # aggregate to give corresponding fast indexing scheme data
+    def pack(p):
+        return d_tilde*(numpy.ravel(p)[slow_indexing])
+    
+    # de-aggregate to give corresponding slow indexing scheme data
+    # inverse permute to match default indexing scheme
+    # inflate
+    def unpack(y):
+        return numpy.reshape((d*y)[slow_indexing_inverse], slow_model['np'])
+    
+    # ==========================================================================
+    # construct the cme solver
+    # ==========================================================================
+    
+    new_solver = ode_solver.Solver(dy_dt, p_0)
+    # nb -- it is important to set the transform_dy_dt flag to False here
+    # otherwise the solver will assume that the provided dy_dt is actually
+    # of the form dp_dt and needs to be conjugated by the pack / unpack
+    # functions ...
+    new_solver.set_packing(pack,
+                           unpack,
+                           transform_dy_dt=False)
+    return new_solver, full_model
+
+def main():
+    # ==========================================================================
+    # set model definition parameters
+    # ==========================================================================
+    
+    # xxx todo if these counts are set higher than 999 bad things will happen.
+    # cf dirty hacks used to define state ordering for index schemes
+    initial_s_count = 10
+    initial_e_count = 3
+    epsilon = 0.01
+    
+    # ==========================================================================
+    # compute the approximate cme solver for this model
+    # ==========================================================================
+    
+    # nb the (full) model is used to interface with the cme recorder ...
+    solver, model = create_cme_solver(initial_s_count, initial_e_count, epsilon)
+    
+    print solver.y[-1, -1, 0]
+    # ==========================================================================
+    # advance the solution and plot some results
+    # ==========================================================================
+    recorder = cme_recorder.CmeRecorder(model)
+    recorder.add_target('species',
+                        ['expected value', 'standard deviation'],
+                        model['species'],
+                        model['species counts'])
+    
+    time_steps = numpy.linspace(0.0, 5.0, 101)
+    for t in time_steps:
+        solver.step(t)
+        recorder.write(t, solver.y)
+    
+    graph = True
+    
+    #  graphing code ...
+    if graph:
+        title = 's_count %d e_count %d;\n' % (initial_s_count, initial_e_count)
+        import pylab
+        pylab.figure()
+        for measurement in recorder.measurements('species'):
+            pylab.plot(measurement.times,
+                       measurement.expected_value,
+                       label = measurement.name)
+        pylab.legend()
+        pylab.title(title+'species count expected value')
+        pylab.savefig('ev_%d_%d_approx.png' % (initial_s_count, initial_e_count))
+        pylab.close()
+        pylab.figure()
+        for measurement in recorder.measurements('species'):
+            pylab.plot(measurement.times,
+                       measurement.standard_deviation,
+                       label = measurement.name)
+        pylab.legend()
+        pylab.title(title+'species count standard deviation')
+        pylab.savefig('sd_%d_%d_approx.png' % (initial_s_count, initial_e_count))
+        pylab.close()
     
 if __name__ == '__main__':
     main()
