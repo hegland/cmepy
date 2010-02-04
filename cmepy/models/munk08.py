@@ -68,9 +68,8 @@ def main():
     )
     
     recorder = cmepy.recorder.create(
-        (model.SPECIES_NAMES,
-         m[model.SPECIES_NAMES],
-         m[model.SPECIES_COUNTS])
+        (m.species,
+         m.species_counts)
     )
     
     time_steps = numpy.linspace(0.0, 100.0, 101)
@@ -82,3 +81,4 @@ def main():
     
     cmepy.recorder.display_plots(recorder,
                                  title = m.name)
+	

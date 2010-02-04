@@ -10,9 +10,9 @@ from cmepy.measurement import Measurement
 class MeasurementTests(unittest.TestCase):
     def test_attribute_trickery(self):
         m = Measurement()
-        m.write(0.0, Distribution({0 : 1.0, 1 : 0.0}))
-        m.write(0.5, Distribution({0 : 0.5, 1 : 0.5}))
-        m.write(1.0, Distribution({0 : 0.0, 1 : 1.0}))
+        m.write(0.0, Distribution({(0, ) : 1.0, (1, ) : 0.0}))
+        m.write(0.5, Distribution({(0, ) : 0.5, (1, ) : 0.5}))
+        m.write(1.0, Distribution({(0, ) : 0.0, (1, ) : 1.0}))
         
         assert_almost_equal(numpy.array(m.expectation),
                             [[0], [0.5], [1]])

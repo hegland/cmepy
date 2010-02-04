@@ -3,7 +3,7 @@ experimental cme_solver implementation
 """
 
 import numpy
-from cmepy import cme_matrix, domain, ode_solver, state_enum, validate
+from cmepy import cme_matrix, domain, ode_solver, state_enum
 from cmepy import model as mdl
 
 def create_packing_functions(domain_enum):
@@ -89,7 +89,7 @@ def create(model,
             if both domain_states and model['shape'] are unspecified.
     """
     
-    validate.model(model)
+    mdl.validate_model(model)
     
     
     # determine states in domain, then construct an enumeration of the
@@ -99,7 +99,7 @@ def create(model,
             lament = 'if no states given, model must contain key \'%s\''
             raise KeyError(lament % mdl.SHAPE)
         else:
-            domain_states = domain.from_rect(shape = model[mdl.SHAPE])
+            domain_states = domain.from_rect(shape = model.shape)
     
     domain_enum = state_enum.create(domain_states)
     

@@ -9,6 +9,9 @@ class Measurement(object):
         self.times = []
         self.distributions = []
     
+    def __len__(self):
+        return len(self.times)
+    
     def write(self, t, p):
         self.times.append(t)
         self.distributions.append(p.map(self.transform))
@@ -27,7 +30,7 @@ class Measurement(object):
             if stat_name in d.statistics:
                 statistic.append(d.statistics[stat_name]())
             else:
-                raise KeyError
+                raise KeyError(str(stat_name))
         return statistic
     
     def __getattribute__(self, attrname):

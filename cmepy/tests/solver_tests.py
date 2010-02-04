@@ -109,17 +109,15 @@ class SolverTests(unittest.TestCase):
         t_max = 1.0   
         
         # compute net copy count
-        species_counts = m[model.SPECIES_COUNTS]
-        exact_size = species_counts[0](0, 0) + species_counts[1](0, 0) 
+        exact_size = m.species_counts[0](0, 0) + m.species_counts[1](0, 0) 
         
         def f(p):
             recorder = cmepy.recorder.create(
-                (model.SPECIES_NAMES,
-                 m[model.SPECIES_NAMES],
-                 m[model.SPECIES_COUNTS])
+                (m.species,
+                 m.species_counts)
             )
             recorder.write(t_max, p)
-            d = recorder[model.SPECIES_NAMES]['A'].distributions[-1]
+            d = recorder['A'].distributions[-1]
             return d.to_dense((exact_size+1, ))
         
         compare_against_exact(
@@ -143,16 +141,14 @@ class SolverTests(unittest.TestCase):
         t_max = 0.01
         
         # compute net copy count
-        species_counts = m[model.SPECIES_COUNTS]
-        exact_size = species_counts[0](0, 0) + species_counts[1](0, 0)
+        exact_size = m.species_counts[0](0, 0) + m.species_counts[1](0, 0)
         def f(p):
             recorder = cmepy.recorder.create(
-                (model.SPECIES_NAMES,
-                 m[model.SPECIES_NAMES],
-                 m[model.SPECIES_COUNTS])
+                (m.species,
+                 m.species_counts)
             )
             recorder.write(t_max, p)
-            d = recorder[model.SPECIES_NAMES]['B'].distributions[-1]
+            d = recorder['B'].distributions[-1]
             return d.to_dense((exact_size+1, ))
         
         compare_against_exact(

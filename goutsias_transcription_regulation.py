@@ -138,9 +138,9 @@ def main():
     )
     
     recorder = cmepy.recorder.create(
-        (cmepy.model.SPECIES_NAMES,
-         m[cmepy.model.SPECIES_NAMES],
-         m[cmepy.model.SPECIES_COUNTS])
+        ('species',
+         m.species,
+         m.species_counts)
     )
     
     t_final = 60.0 
@@ -153,8 +153,8 @@ def main():
     
     cmepy.recorder.display_plots(
         recorder,
-        cmepy.model.SPECIES_NAMES,
-        title = m[cmepy.model.NAME]
+        'species',
+        title = m.name
     )
 
 if __name__ == '__main__':

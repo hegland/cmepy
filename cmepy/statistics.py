@@ -2,8 +2,10 @@
 Statistical utilities for working with CME solver output.
 """
 
+import itertools
 import operator
 import numpy
+
 from cmepy import domain
 
 class Distribution(dict):
@@ -121,22 +123,16 @@ class Distribution(dict):
             shifted_state = tuple(numpy.asarray(state) - numpy.asarray(origin))
             p_dense[shifted_state] += probability
         return p_dense
-    
 
-def map_distribution(f, p, g=None):
+def map_distribution_simple(f, p, g=None):
     """
-    map_distribution(f, p [, g]) -> mapping
+    map_distribution_simple(f, p [, g]) -> mapping
     
-    Returns a copy of the mapping p, with each key replaced by its
-    image under f. Any duplicate image keys are merged, with the value of
-    the merged key equal to the sum of the values.
-    
-    If g is supplied, it is used instead of addition to reduce the values of
-    duplicate image keys.
+    reference implementation of map_distribution that is simple but slow
     """
     
     if g is None:
-        g = operator.add
+        g = operator.add   
     f_p = {}
     for state, probability in p.iteritems():
         f_state = f(state)
@@ -146,6 +142,77 @@ def map_distribution(f, p, g=None):
             f_p[f_state] = probability
     return f_p
 
+def map_distribution(f, p, g=None):
+    """
+    map_distribution(f, p [, g]) -> mapping
+    
+    Returns a copy of the mapping p, with each key replaced by its
+    image under f. Any duplicate image keys are merged, with the value of
+    the merged key equal to the sum of the values.
+    
+    It is expected that f returns tuples or scalars, and behaves in a
+    reasonable way when given vector state array arguments.
+    
+    If g is supplied, it is used instead of addition to reduce the values of
+    duplicate image keys. If given, g must have a reduce method of the form
+        g.reduce(probabilities) -> reduced_probability
+        
+    for example, setting g to a numpy ufunc would be fine.
+    """
+    
+    # all this nonsense actually does something fairly straight forward
+    # see 'map_distribution_simple' for a reference implementation that
+    # avoids numpy operations
+    
+    num_items = len(p)
+    
+    if num_items == 0:
+        return {}
+    
+    if g is None:
+        g = numpy.add
+    
+    s, v = domain.from_mapping(p)
+    fs = numpy.asarray(f(s))
+    
+    # handle case where f returns scalar arguments, say
+    # this might be a touch flakey
+    if len(fs.shape) != 2:
+        fs = fs*numpy.ones((1, s.shape[1]))
+    
+    # sort image states using lexical ordering on coords, then
+    # apply same ordering to values
+    
+    order = numpy.lexsort(fs)
+    sfs = fs[:, order]
+    sv = v[order]
+    
+    # figure out the indices of the first instance of each state
+    not_equal_adj = numpy.logical_or.reduce(sfs[:, :-1] != sfs[:, 1:])
+    not_equal_adj = numpy.concatenate(([True], not_equal_adj))
+    
+    # extract the unique image states under f
+    usfs = sfs[:, not_equal_adj]
+    
+    # convert back from arrya representation to iterator of state tuples
+    unique_image_states = domain.to_iter(usfs)
+    
+    # determine start and end indices of each equivalence class of
+    # values in the sorted values array, where values are equivalent if
+    # they are associated with states that agree under the transform f
+    class_begin = numpy.nonzero(not_equal_adj)[0]
+    class_end = numpy.concatenate((class_begin[1:], [num_items]))
+    
+    # construct the resulting mapped probability distribution
+    # each image state s maps to the values in its equivalence class,
+    # reduced by g
+    p_mapped = {}
+    for s, i, j in itertools.izip(unique_image_states, class_begin, class_end):
+        p_mapped[s] = g.reduce(sv[i:j])
+    
+    return p_mapped
+        
+        
 def expectation(p):
     """
     expectation(p) -> mu

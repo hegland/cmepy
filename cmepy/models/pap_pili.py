@@ -14,12 +14,7 @@ This is the second example from Munsky & Khammash :
     }
 """
 
-import numpy
-
-import cmepy.solver
-import cmepy.recorder
 import cmepy.model
-import cmepy.domain
 from cmepy.util import non_neg
 
 def gen_states(max_papi = 100, dna_count = 1):
@@ -111,6 +106,10 @@ def create_model(max_papi = 100,
     )
     
 def main():
+    import numpy
+    import cmepy.solver
+    import cmepy.recorder
+    import cmepy.domain
     
     dna_count = 5
     m = create_model(dna_count = dna_count)
@@ -121,9 +120,8 @@ def main():
         domain_states = domain_states
     )
     recorder = cmepy.recorder.create(
-        (cmepy.model.SPECIES_NAMES,
-         m[cmepy.model.SPECIES_NAMES],
-         m[cmepy.model.SPECIES_COUNTS])
+        (m.species,
+         m.species_counts)
     )
     
     time_steps = numpy.linspace(0.0, 10.0, 101)
@@ -133,9 +131,4 @@ def main():
         print 't = %g; p_sink = %g' % (t, p_sink)
         recorder.write(t, p)
     
-    cmepy.recorder.display_plots(recorder,
-                                 cmepy.model.SPECIES_NAMES,
-                                 title = m[cmepy.model.NAME])
-
-if __name__ == '__main__':
-    main()
+    cmepy.recorder.display_plots(recorder, title = m.name)

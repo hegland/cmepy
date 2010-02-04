@@ -125,9 +125,8 @@ def main():
         sink = True
     )
     recorder = cmepy.recorder.create(
-        (model.SPECIES_NAMES,
-         m[model.SPECIES_NAMES],
-         m[model.SPECIES_COUNTS])
+        (m.species,
+         m.species_counts)
     )
     time_steps = numpy.linspace(0.0, 1000.0, 101)
     for t in time_steps:

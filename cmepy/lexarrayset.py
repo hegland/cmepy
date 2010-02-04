@@ -168,7 +168,8 @@ class LexArraySet(object):
             else:
                 self.data = data
     
-    def _get_size(self):
+    @property
+    def size(self):
         """
         number of elements in set (equal to number of rows of the lexical array)
         """
@@ -177,8 +178,6 @@ class LexArraySet(object):
             return 0
         else:
             return shape[1]
-    
-    size = property(_get_size)
     
     def member(self, rhs):
         """
