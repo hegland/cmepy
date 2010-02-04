@@ -6,7 +6,7 @@ from numpy.testing.utils import assert_almost_equal
 
 from cmepy import statistics
 
-class TestStatistics(unittest.TestCase):
+class StatisticsTests(unittest.TestCase):
     def test_one_dee_distributions(self):
         p_1 = {(1, ) : 0.1,
                (2, ) : 0.2,
@@ -48,11 +48,11 @@ class TestStatistics(unittest.TestCase):
         assert_almost_equal(cov, cov_goal)
         
 def suite():
-    suite = unittest.TestLoader().loadTestsFromTestCase(TestStatistics)
+    suite = unittest.TestLoader().loadTestsFromTestCase(StatisticsTests)
     return suite
 
 def main():
-    test_support.run_unittest(TestStatistics)
+    test_support.run_unittest(StatisticsTests)
 
 if __name__ == '__main__':
     main()

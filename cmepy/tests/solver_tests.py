@@ -71,7 +71,7 @@ def compare_against_binomial(rate, shape):
                       f = lambda p : p.to_dense(shape),
                       p_exact = exact_binomial(rate, shape[0]))
     
-class CmeSolverTests(unittest.TestCase):
+class SolverTests(unittest.TestCase):
     def test_against_poisson_processes(self):
         """
         compare against analytic solution for Poisson process
@@ -163,11 +163,11 @@ class CmeSolverTests(unittest.TestCase):
         )
 
 def suite():
-    test_suite = unittest.TestLoader().loadTestsFromTestCase(CmeSolverTests)
+    test_suite = unittest.TestLoader().loadTestsFromTestCase(SolverTests)
     return test_suite
 
 def main():
-    test_support.run_unittest(CmeSolverTests)
+    test_support.run_unittest(SolverTests)
 
 if __name__ == '__main__':
     main()
