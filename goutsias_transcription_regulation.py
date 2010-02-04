@@ -27,6 +27,7 @@ a time-independent approximation of this example was also considered by
 import numpy
 import cmepy.solver
 import cmepy.recorder
+from cmepy.util import non_neg
 
 def create_time_dependencies():
     """
@@ -45,10 +46,6 @@ def create_time_dependencies():
     return {frozenset([4, 6, 8]) : phi}
 
 def create_model(dna_count):
-    
-    def non_neg(x):
-        return numpy.where(x>0.0, x, 0.0)
-
 
     c = {'DNA' : lambda *x : x[0],
          'DNA-D' : lambda *x : x[1],

@@ -9,6 +9,7 @@ TODO: fix doc to give a link to the actual paper ?
 
 import numpy
 from cmepy import model
+from cmepy.util import non_neg
 
 def create_model_uni_dim(initial_copies = 10, rate = 0.001):
     """
@@ -84,9 +85,6 @@ def create_model_quad_autocat(max_p=30,
         
         shape = (max_p+1, max_q+1, s_0+1)
         origin = (0, 0, 3, )
-    
-    def non_neg(x):
-        return numpy.maximum(x, 0.0)
     
     m = model.create(
         name = model_name,

@@ -2,13 +2,12 @@
 Models for Michaelis-Menten systems
 """
 
+from cmepy.util import non_neg
+
 def __create_mm_simple_model(np = None):
     """
     Creates a model for a simple michaelis-menten system.
     """
-    from numpy import maximum
-    
-    non_neg = lambda x : maximum(x, 0)
     # first, define functions mapping reaction counts x to species counts
     species_c = (lambda *x : non_neg(50 - x[0] - x[1]),
                  lambda *x : non_neg(10-x[0]+x[1]+x[2]),
