@@ -10,4 +10,5 @@ __all__ = ['core',
            'solver',
            'recorder',
            'models',
-           'test_all']
+           'test_all',
+           'new_core']

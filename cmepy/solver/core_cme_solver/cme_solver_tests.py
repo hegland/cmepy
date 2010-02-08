@@ -3,7 +3,7 @@ from test import test_support
 from cmepy.solver.core_cme_solver import cme_solver
 
 
-class CmeSolverTest(unittest.TestCase):
+class CmeSolverTests(unittest.TestCase):
     """
     A test class for the cme_solver module
     
@@ -85,11 +85,11 @@ class CmeSolverTest(unittest.TestCase):
         assert_array_almost_equal(p[:-1], pexact[:-1])
 
 def suite():
-    suite = unittest.TestLoader().loadTestsFromTestCase(CmeSolverTest)
+    suite = unittest.TestLoader().loadTestsFromTestCase(CmeSolverTests)
     return suite
 
 def main():
-    test_support.run_unittest(CmeSolverTest)
+    test_support.run_unittest(CmeSolverTests)
 
 if __name__ == '__main__':
     main()

@@ -24,7 +24,7 @@ setup(
     
     package_data = {'':['*.txt'], 'doc':['*.pdf']},
     
-    test_suite = "cmepy.test_all",
+    test_suite = "test_all",
 
     packages = find_packages(),
 )

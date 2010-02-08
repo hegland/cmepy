@@ -5,15 +5,21 @@ hook allowing all unit tests to be run via setuptools
 import unittest
 
 def additional_tests():
+    test_suites = set()
     
     from cmepy.core import cme_tests
-    cme_test_suite = cme_tests.suite()
+    test_suites.add(cme_tests.suite())
     
     from cmepy.solver.core_cme_solver import cme_solver_tests
-    cme_solver_test_suite = cme_solver_tests.suite()
+    test_suites.add(cme_solver_tests.suite())
     
-    all_test_suite = unittest.TestSuite([cme_test_suite,
-                                         cme_solver_test_suite,])
+    from cmepy.new_core import ode_solver_tests
+    test_suites.add(ode_solver_tests.suite())
+    
+    from cmepy.new_core import cme_solver_tests
+    test_suites.add(cme_solver_tests.suite())
+    
+    all_test_suite = unittest.TestSuite(test_suites)
     
     return all_test_suite
 
