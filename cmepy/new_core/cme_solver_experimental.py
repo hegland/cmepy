@@ -9,13 +9,13 @@ import cmepy.new_core.cme_matrix as cme_matrix
 import cmepy.new_core.state_enum as state_enum
 import cmepy.new_core.domain as domain
 
-def create_packing_functions():
+def create_packing_functions(domain_enum):
     """
-    create_packing_functions() -> (pack, unpack)
+    create_packing_functions(domain_enum) -> (pack, unpack)
     
     where
     
-        pack(p, p_sink) -> y
+        pack((p, p_sink)) -> y
         unpack(y) -> (p, p_sink)
     """
     
@@ -25,24 +25,27 @@ def create_packing_functions():
         
         where
         
-            p : dense probability array (wrt some StateEnumeration instance)
+            p : mapping from states to probability
             p_sink : float, storing probability lost from domain due to
                 truncation of domain states
             y : array passed to differential equations solver
         """
-        return numpy.concatenate((p, [p_sink]))
+        d_dense = domain_enum.pack_distribution(p)
+        return numpy.concatenate((d_dense, [p_sink]))
     def unpack(y):
         """
         unpack(y) -> (p, p_sink)
         
         where
         
-            p : dense probability array (wrt some StateEnumeration instance)
+            p : mapping from states to probability
             p_sink : float, storing probability lost from domain due to
                 truncation of domain states
             y : array passed to differential equations solver
         """
-        return y[:-1], y[-1]
+        p_sparse = domain_enum.unpack_distribution(y[:-1])
+        p_sink = y[-1]
+        return p_sparse, p_sink
     
     return (pack, unpack)
 
@@ -50,7 +53,7 @@ def create_cme_solver(model,
                       sink,
                       p_0=None,
                       time_dependencies=None,
-                      domain_enum=None):
+                      domain_states=None):
     """
     create_cme_solver(model,sink[,p_0,time_dependencies,states]) -> solver
     
@@ -82,12 +85,11 @@ def create_cme_solver(model,
             coefficient functions are specified, that is, the CME has
             time-independent propensities.
         
-        domain_enum : (optional) StateEnum instance storing an enumeration
-            of states in the domain. By default, attempt to infer the domain
-            states assuming a rectangular domain defined by the 'np' entry of
-            the model, and optionally also the 'norigin' entry.
-            A ValueError is raised if both domain_enum and model['np'] are
-            unspecified.
+        domain_states : (optional) array of states in the domain.
+            By default, attempt to infer the domain states assuming a
+            rectangular domain defined by the 'np' entry of the model, and
+            optionally also the 'norigin' entry. A ValueError is raised if both
+            domain_states and model['np'] are unspecified.
     """
     
     assert type(sink) is bool
@@ -96,7 +98,7 @@ def create_cme_solver(model,
     
     # determine states in domain, then construct an enumeration of the
     # domain states
-    if domain_enum is None:
+    if domain_states is None:
         if 'np' not in model:
             lament = 'if no states given, model must contain key \'np\''
             raise KeyError(lament)
@@ -104,10 +106,11 @@ def create_cme_solver(model,
             # origin is now well-defined
             if origin is None:
                 origin = (0,)*len(model['np'])
-            states = domain.from_rect(shape = model['np'],
-                                      slices = None,
-                                      origin = origin)
-            domain_enum = state_enum.create(states)
+            domain_states = domain.from_rect(shape = model['np'],
+                                             slices = None,
+                                             origin = origin)
+    
+    domain_enum = state_enum.create(domain_states)
     
     # determine p_0, then construct a dense representation with respect to
     # the domain enumeration
@@ -117,7 +120,6 @@ def create_cme_solver(model,
             raise ValueError(lament)
         else:
             p_0 = {origin : 1.0}
-    p_0_dense = domain_enum.pack_distribution(p_0)
     
     # compute reaction matrices and use them to define differential equations
     gen_matrices = cme_matrix.gen_reaction_matrices(model,
@@ -130,9 +132,13 @@ def create_cme_solver(model,
     
     # construct and initialise solver
     if sink:
-        cme_solver = ode_solver.Solver(dy_dt, y_0 = (p_0_dense, 0.0))
-        pack, unpack = create_packing_functions()
+        sink_p_0 = 0.0
+        cme_solver = ode_solver.Solver(dy_dt, y_0 = (p_0, sink_p_0))
+        pack, unpack = create_packing_functions(domain_enum)
         cme_solver.set_packing(pack, unpack, transform_dy_dt = False)
     else:
-        cme_solver = ode_solver.Solver(dy_dt, y_0 = p_0_dense)
+        pack = domain_enum.pack_distribution
+        unpack = domain_enum.unpack_distribution
+        cme_solver = ode_solver.Solver(dy_dt, y_0 = p_0)
+        cme_solver.set_packing(pack, unpack, transform_dy_dt = False)
     return cme_solver

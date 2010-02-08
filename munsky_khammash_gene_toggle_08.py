@@ -30,6 +30,7 @@ def create_model(max_s1_copies, max_s2_copies):
     offsets = ((1, 0), (-1, 0), (0, 1), (0, -1))
     
     np = (max_s1_copies+1, max_s2_copies+1)
+    norigin = (0, 0)
     
     doc = 'Gardner\'s gene toggle according to Munsky & Khammash'
     model = {'doc' : doc,
@@ -37,7 +38,8 @@ def create_model(max_s1_copies, max_s2_copies):
              'species counts' : (s1_count, s2_count),
              'propensities' : propensities,
              'offset_vectors' : offsets,
-             'np' : np}
+             'np' : np,
+             'norigin' : norigin}
     return model
 
 def display_plots(recorder, title):

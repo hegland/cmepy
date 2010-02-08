@@ -3,7 +3,8 @@ lexical array set operations
 
 these operations are based upon the one dimensional array set operations
 from numpy.lib.arraysetops, but generalised to work for sets of m-tuples,
-where each element is stored as a row of a 2d m by n array.
+where each element is stored as a row of a 2d m by n array, using numpy's
+'lexsort' lexical sorting function.
 """
 
 import numpy
