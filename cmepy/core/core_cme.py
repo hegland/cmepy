@@ -82,8 +82,8 @@ def process_offset_vectors(np, propensities, offset_vectors):
         offset_one = (1, )
         offset_vectors = []
         dims = len(np)
-        for dim in xrange(len(propensities)):
-            offset = dim*offset_zero + offset_one + (dims-2)*offset_zero
+        for dim in xrange(dims):
+            offset = dim*offset_zero + offset_one + (dims-1-dim)*offset_zero
             offset_vectors.append(offset)
     else:
         if len(offset_vectors) != len(propensities):

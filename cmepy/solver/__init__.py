@@ -10,3 +10,4 @@ For further details please consult the sub-package documentation.
 
 from cmepy.solver.solver import Solver
 from cmepy.solver.core_cme_solver import CmeSolver
+from cmepy.solver.matrix_cme_solver import CmeSolverMatrix
