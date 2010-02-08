@@ -94,13 +94,14 @@ def create_packing_functions(model):
     
     return (pack, unpack)
 
-def create_cme_solver(model):
+def create_cme_solver(model, p_0=None):
     # construct dependencies
     pack, unpack = create_packing_functions(model)
-    default_p_0 = create_default_p_0(model)
+    if p_0 is None:
+        p_0 = create_default_p_0(model)
     flux_data = create_flux_data(model)
     dp_dt = create_diff_eqs(flux_data)
     # then initialise and return solver
-    cme_solver = ode_solver.Solver(dp_dt, default_p_0)
+    cme_solver = ode_solver.Solver(dp_dt, p_0)
     cme_solver.set_packing(pack, unpack)
     return cme_solver
