@@ -5,6 +5,13 @@ A few utility routines. 27/5/09. R. Fletcher-Costin, ANU
 import itertools
 import numpy
 
+def non_neg(x):
+    """
+    non_neg(x) -> max(x, 0) [array operation]
+    """
+    
+    return numpy.maximum(x, 0)
+
 def indices_ext(shape, slices=None, origin=None):
     """
     indices_ext(shape [, slices [, origin]]) -> indices array

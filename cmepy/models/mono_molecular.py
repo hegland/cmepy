@@ -2,31 +2,61 @@
 some mono-molecular models
 """
 
-from numpy import maximum
+from cmepy.util import non_neg
+from cmepy import model
 
-A2B2C  = {'np' : (32, 32),
-          'propensities' : (lambda x1, x2: maximum(31.0-x1, 0.0),
-                            lambda x1, x2: maximum(x1-x2, 0.0)),
-          'offset_vectors' : ((1, 0), (0, 1)),
-          'doc' : 'simplest nontrivial monomolecular reaction',
-          'reactions' : ['A->B', 'B->C'],
-          'species' : ['A', 'B', 'C'],
-          'species counts' : (lambda x1, x2: maximum(31-x1,0.0),
-                              lambda x1, x2: maximum(x1-x2, 0.0),
-                              lambda x1, x2: x2)}
-A2B2A  = {'np' : (50, 60),
-          'propensities' : (lambda x1, x2: maximum(31.0-x1+x2, 0.0),
-                            lambda x1, x2: maximum(x1-x2, 0.0)),
-          'offset_vectors' : ((1, 0), (0, 1)),
-          'doc' : """simplest reversible monomolecular reaction
-          
-                     for unit testing set np = (50, 60), and 
-                     propensities:
-                     (lambda x1, x2: maximum(31.0-x1+x2, 0.0),
-                            lambda x1, x2: maximum(x1-x2, 0.0))
-                  """,
-          'reactions' : ['A->B', 'B->A'],
-          'species' : ['A', 'B'],
-          'species counts' : (lambda x1, x2: maximum(31-x1+x2,0.0),
-                              lambda x1, x2: maximum(x1-x2, 0.0))}
+A2B2C = model.create(
+    name = 'simplest nontrivial mono-molecular reaction',
+    propensities = (
+        lambda *x: non_neg(31.0-x[0]),
+        lambda *x: non_neg(x[0]-x[1]),
+    ),
+    transitions = (
+        (1, 0),
+        (0, 1),
+    ),
+    reactions = (
+        'A->B',
+        'B->C',
+    ),
+    species_counts = (
+        lambda *x: non_neg(31-x[0]),
+        lambda *x: non_neg(x[0]-x[1]),
+        lambda *x: x[1],
+    ),
+    species = (
+        'A',
+        'B',
+        'C',
+    ),
+    shape = (32, 32),
+    origin = (0, 0)
+)
 
+A2B2A = model.create(
+    name = 'simplest reversible mono-molecular reaction',
+    propensities = (
+        lambda *x: non_neg(31.0-x[0]+x[1]),
+        lambda *x: non_neg(x[0]-x[1]),
+    ),
+    transitions = (
+        (1, 0),
+        (0, 1),
+    ),
+    reactions = (
+        'A->B',
+        'B->A',
+    ),
+    species_counts = (
+        lambda *x: non_neg(31-x[0]+x[1]),
+        lambda *x: non_neg(x[0]-x[1]),
+        lambda *x: x[1],
+    ),
+    species = (
+        'A',
+        'B',
+        'C',
+    ),
+    shape = (50, 60),
+    origin = (0, 0)
+)

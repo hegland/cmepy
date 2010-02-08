@@ -4,6 +4,7 @@ experimental cme_solver implementation
 
 import numpy
 from cmepy import cme_matrix, domain, ode_solver, state_enum, validate
+from cmepy import model as mdl
 
 def create_packing_functions(domain_enum):
     """
@@ -83,28 +84,28 @@ def create(model,
         
         domain_states : (optional) array of states in the domain.
             By default, attempt to infer the domain states assuming a
-            rectangular domain defined by the 'np' entry of the model, and
-            optionally also the 'norigin' entry. A ValueError is raised if both
-            domain_states and model['np'] are unspecified.
+            rectangular domain defined by the 'shape' entry of the model, and
+            optionally also the 'origin' entry. A ValueError is raised if both
+            domain_states and model['shape'] are unspecified.
     """
     
     validate.model(model)
     
     assert type(sink) is bool
     
-    origin = model.get('norigin', None)
+    origin = model.get(mdl.ORIGIN, None)
     
     # determine states in domain, then construct an enumeration of the
     # domain states
     if domain_states is None:
-        if 'np' not in model:
-            lament = 'if no states given, model must contain key \'np\''
-            raise KeyError(lament)
+        if mdl.SHAPE not in model:
+            lament = 'if no states given, model must contain key \'%s\''
+            raise KeyError(lament % mdl.SHAPE)
         else:
             # origin is now well-defined
             if origin is None:
-                origin = (0,)*len(model['np'])
-            domain_states = domain.from_rect(shape = model['np'],
+                origin = (0,)*len(model[mdl.SHAPE])
+            domain_states = domain.from_rect(shape = model[mdl.SHAPE],
                                              slices = None,
                                              origin = origin)
     
@@ -114,8 +115,8 @@ def create(model,
     # the domain enumeration
     if p_0 is None:
         if origin is None:
-            lament = 'if no p_0 given, model must contain key \'norigin\''
-            raise ValueError(lament)
+            lament = 'if no p_0 given, model must contain key \'%s\''
+            raise ValueError(lament % mdl.ORIGIN)
         else:
             p_0 = {origin : 1.0}
     

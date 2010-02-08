@@ -8,12 +8,7 @@ from numpy.testing import assert_almost_equal
 
 import cmepy.recorder
 import cmepy.solver
-
-def to_dense(p, shape):
-    p_dense = numpy.zeros(shape, dtype=numpy.float)
-    for state, probability in p.iteritems():
-        p_dense[state] = probability
-    return p_dense
+from cmepy import model
 
 def exact_poisson(rates, shape):
     poissons = []
@@ -48,26 +43,32 @@ def compare_against_poisson(rates, shape):
     def constant_propensity(rate):
         return lambda *x : rate
     props = tuple(constant_propensity(r) for r in rates)
-    offsets = tuple((0,)*i + (1,) + (0,)*(size-1-i) for i in xrange(size))
-    model = {'propensities' : props,
-             'offset_vectors' : offsets,
-             'np' : shape,
-             'norigin' : (0,)*size}
+    transitions = tuple((0,)*i + (1,) + (0,)*(size-1-i) for i in xrange(size))
     
-    compare_against_exact(model,
+    m = model.create(
+        propensities = props,
+        transitions = transitions,
+        shape = shape,
+        origin = (0, )*size
+    )
+    
+    compare_against_exact(m,
                           t = 1.0,
-                          f = lambda p : to_dense(p, shape),
+                          f = lambda p : p.to_dense(shape),
                           p_exact = exact_poisson(rates, shape))
 
 def compare_against_binomial(rate, shape):
-    model = {'propensities' : (lambda *x : rate*(shape[0]-x[0]), ),
-                 'offset_vectors' : ((1, ), ),
-                 'np' : shape,
-                 'norigin' : (0, )}
+    
+    m = model.create(
+        propensities = (lambda *x : rate*(shape[0]-x[0]), ),
+        transitions = ((1, ), ),
+        shape = shape,
+        origin = (0, )
+    )
         
-    compare_against_exact(model,
+    compare_against_exact(m,
                       t = 1.0,
-                      f = lambda p : to_dense(p, shape),
+                      f = lambda p : p.to_dense(shape),
                       p_exact = exact_binomial(rate, shape[0]))
     
 class CmeSolverTests(unittest.TestCase):
@@ -100,7 +101,7 @@ class CmeSolverTests(unittest.TestCase):
         with kappa1 = kappa2 = 1.0
         """
         
-        from cmepy.models import A2B2A as model
+        from cmepy.models.mono_molecular import A2B2A as m
         
         # model is defined in reaction coordinates, hence t_max must be small,
         # otherwise significant quantities of probability will escape the
@@ -108,21 +109,21 @@ class CmeSolverTests(unittest.TestCase):
         t_max = 1.0   
         
         # compute net copy count
-        species_counts = model['species counts']
+        species_counts = m[model.SPECIES_COUNTS]
         exact_size = species_counts[0](0, 0) + species_counts[1](0, 0) 
         
         def f(p):
             recorder = cmepy.recorder.create(
-                ('species',
-                 model['species'],
-                 model['species counts'])
+                (model.SPECIES_NAMES,
+                 m[model.SPECIES_NAMES],
+                 m[model.SPECIES_COUNTS])
             )
             recorder.write(t_max, p)
-            d = recorder['species']['A'].distributions[-1]
-            return to_dense(d, (exact_size+1, ))
+            d = recorder[model.SPECIES_NAMES]['A'].distributions[-1]
+            return d.to_dense((exact_size+1, ))
         
         compare_against_exact(
-            model,
+            m,
             t_max,
             f,
             exact_monomolecular_aba(t_max, exact_size)
@@ -134,7 +135,7 @@ class CmeSolverTests(unittest.TestCase):
         with kappa1 = kappa2 = 1.0
         """
         
-        from cmepy.models import A2B2C as model
+        from cmepy.models.mono_molecular import A2B2C as m
         
         # model is defined in reaction coordinates, hence t_max must be small,
         # otherwise significant quantities of probability will escape the
@@ -142,21 +143,20 @@ class CmeSolverTests(unittest.TestCase):
         t_max = 0.01
         
         # compute net copy count
-        species_counts = model['species counts']
+        species_counts = m[model.SPECIES_COUNTS]
         exact_size = species_counts[0](0, 0) + species_counts[1](0, 0)
-        
         def f(p):
             recorder = cmepy.recorder.create(
-                ('species',
-                 model['species'],
-                 model['species counts'])
+                (model.SPECIES_NAMES,
+                 m[model.SPECIES_NAMES],
+                 m[model.SPECIES_COUNTS])
             )
             recorder.write(t_max, p)
-            d = recorder['species']['B'].distributions[-1]
-            return to_dense(d, (exact_size+1, ))
+            d = recorder[model.SPECIES_NAMES]['B'].distributions[-1]
+            return d.to_dense((exact_size+1, ))
         
         compare_against_exact(
-            model,
+            m,
             t_max,
             f,
             exact_monomolecular_abc(t_max, exact_size)

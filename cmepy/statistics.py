@@ -103,6 +103,25 @@ class Distribution(dict):
         """
         return numpy.sqrt(self.variance())
     
+    def to_dense(self, shape, origin=None):
+        """
+        d.to_dense(shape[, origin]) -> array
+        
+        Returns dense version of distribution for given array shape and origin
+        """
+        
+        if origin is None:
+            origin = (0, )*len(shape)
+
+        states = set(domain.to_iter(domain.from_rect(shape, origin=origin)))
+        states &= set(self.iterkeys())
+        p_dense = numpy.zeros(shape, dtype=numpy.float)
+        for state in states:
+            probability = self[state]
+            shifted_state = tuple(numpy.asarray(state) - numpy.asarray(origin))
+            p_dense[shifted_state] += probability
+        return p_dense
+    
 
 def map_distribution(f, p, g=None):
     """

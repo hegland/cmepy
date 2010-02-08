@@ -2,9 +2,11 @@
 model of two competing clonotypes
 """
 
+from cmepy import model
+
 def __create_burr08_model():
     """
-    function to create the model
+    reaction count model of two competing clonotypes
     """
     
     import numpy
@@ -40,16 +42,36 @@ def __create_burr08_model():
     
     reaction_b_decay = lambda *r : species_count_b(*r)
     
-    model = {}
-    model['doc'] = 'T Cell clonoTypes (Time Independent Propensities)'
-    model['np'] = (11, 11, 11, 11)
-    model['propensities'] = (reaction_a_birth,
-                             reaction_a_decay,
-                             reaction_b_birth,
-                             reaction_b_decay)
-    model['reactions'] = ['*->A', 'A->*', '*->B', 'B->*']
-    model['species counts'] = (species_count_a, species_count_b)
-    model['species'] = ['A', 'B']
-    return model
+    m = model.create(
+        name = 'T Cell clonoTypes (Time Independent Propensities)',
+        shape = (11, )*4,
+        propensities = (
+            reaction_a_birth,
+            reaction_a_decay,
+            reaction_b_birth,
+            reaction_b_decay
+        ),
+        transitions = (
+            (1, 0),
+            (-1, 0),
+            (0, 1),
+            (0, -1)
+        ),
+        reactions = (
+            '*->A',
+            'A->*',
+            '*->B',
+            'B->*'
+        ),
+        species_counts = (
+            species_count_a,
+            species_count_b
+        ),
+        species = (
+            'A',
+            'B'
+        )
+    )
+    return m
 
 BURR08 = __create_burr08_model()

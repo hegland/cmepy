@@ -6,6 +6,7 @@ import itertools
 import numpy
 import scipy.sparse
 from cmepy import validate
+from cmepy import model as mdl
 
 def compute_propensity(prop, states):
     """
@@ -52,7 +53,7 @@ def gen_reaction_matrices(model,
     
     Generator yielding the sparse matrices for the dp/dt term of each reaction,
     matching the ordering implied by the ordering of the reaction propensity
-    functions and offset vectors in the model.
+    functions and transtions in the model.
     
     domain_enum : StateEnum instance enumerating the states in the domain
     sink : boolean flag indicating if the reaction matrices should add
@@ -75,27 +76,17 @@ def gen_reaction_matrices(model,
     if sink:
         sink_index = domain_enum.size
     
-    propensities = model['propensities']
-    offset_vectors = model['offset_vectors']
-    if len(propensities) != len(offset_vectors):
-        raise ValueError('number of propensities and offset_vectors not equal')
-    reactions = itertools.izip(propensities, offset_vectors)
+    propensities = model[mdl.PROPENSITIES]
+    transitions = model[mdl.TRANSITIONS]
+    reactions = itertools.izip(propensities, transitions)
     
     src_states = numpy.array(domain_enum.ordered_states)
     src_indices = domain_enum.indices(src_states)
     
-    for (propensity, offset_vector) in reactions:
-        # verify that offset_vector is formatted reasonably
-        offset_vector = numpy.asarray(offset_vector)
-        if len(offset_vector.shape) != 1:
-            lament = 'unable to interpret offset vector \"%s\" as 1D vector'
-            raise TypeError(lament % str(offset_vector))
-        elif offset_vector.shape[0] < 1:
-            lament = 'offset vector \"%s\" does not have positive length'
-            raise ValueError(lament % str(offset_vector))
-        # compute destination states for this offset
-        offset_vector = offset_vector[:, numpy.newaxis]
-        dst_states = src_states + offset_vector
+    for (propensity, transition) in reactions:
+        # compute destination states for this transition
+        transition = numpy.asarray(transition)[:, numpy.newaxis]
+        dst_states = src_states + transition
         
         # determine which states have destination states inside the
         # truncated domain. these will be defined as the 'interior' states.

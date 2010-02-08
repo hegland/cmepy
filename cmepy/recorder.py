@@ -45,11 +45,11 @@ class CmeRecorder(dict):
         
         if transforms is None:
             def f(dim):
-                return lambda state : state[dim]
+                return lambda state : (state[dim], )
             transforms = tuple(f(i) for i in xrange(len(variables)))
         else:
             def pre_star(f):
-                return lambda state : f(*state)
+                return lambda state : (f(*state), )
             transforms = tuple(pre_star(f) for f in transforms)
         
         if len(variables) != len(transforms):

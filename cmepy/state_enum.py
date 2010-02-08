@@ -2,8 +2,7 @@ import itertools
 
 import numpy
 
-import cmepy.domain as domain
-import cmepy.lexarrayset as lexarrayset
+from cmepy import domain, lexarrayset, statistics
 
 
 def create(initial_states):
@@ -175,7 +174,7 @@ class StateEnum(object):
         # convert from list of coordinate vectors to list of states
         p_states = domain.to_iter(self.states(p_indices))
         if p_sparse is None:
-            p_sparse = {}
+            p_sparse = statistics.Distribution()
         for index, state in itertools.izip(p_indices, p_states):
             value = p_dense[index]
             if value != 0.0:

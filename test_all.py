@@ -23,6 +23,7 @@ SUB_PACKAGES = {
         'lexarrayset_tests',
         'statistics_tests',
         'measurement_tests',
+        'model_tests',
     ],
 }
 
