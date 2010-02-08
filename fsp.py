@@ -37,8 +37,30 @@ class StateIndexMap(object):
         
         # create constants
         self.indices = self.vectstates_to_indices(self.vectstates)
+    
+    def pack_distribution(self, p, y=None):
+        if y is None:
+            y = numpy.zeros((self.size, ))
+        for state in p:
+            index = self.state_to_index[state] - self.origin
+            y[index] = p[state]
+        return y
+    
+    def unpack_distribution(self, y, p=None):
+        if p is None:
+            p = {}
+        for index in self.index_to_state:
+            mass = y[index - self.origin]
+            if mass != 0.0:
+                state = self.index_to_state[index]
+                p[state] = mass
+        return p
+            
         
-def create_flux_matrices(model, state_index_map, error_trackers):
+def create_flux_matrices(model,
+                         state_index_map,
+                         error_trackers,
+                         error_projection_dim):
     
     propensities = model['propensities']
     offset_vectors = model['offset_vectors']
@@ -99,9 +121,9 @@ def create_flux_matrices(model, state_index_map, error_trackers):
                 for error_tracker in error_trackers:
                     error_projection, error_index_map = error_tracker
                     
-                    # todo fix this hack
-                    projection_dim = 4
-                    v = numpy.vectorize(error_projection, otypes = [numpy.int, ]*projection_dim)
+                    # xxx todo this doesn't seem to work properly if the
+                    # error projection dim is set to 1
+                    v = numpy.vectorize(error_projection, otypes = [numpy.int, ]*error_projection_dim)
                     
                     dest_error_states = v(*valid_dest_states)
                     
@@ -110,62 +132,91 @@ def create_flux_matrices(model, state_index_map, error_trackers):
                     data.append(coefficients)
                     cols.append(valid_source_indices)
                     rows.append(dest_error_indices)
-            
-        if len(data)==0:
-            continue
-        
-        def join(x):
-            if len(x) == 0:
-                return []
-            
-            size = numpy.add.reduce([numpy.size(a) for a in x])
-            joined_x = numpy.zeros((size, ), dtype=x[0].dtype)
-            offset = 0
-            for a in x:
-                a_size = numpy.size(a)
-                joined_x[offset:offset+a_size] = a
-                offset += a_size
-            return joined_x
-        
-        # merge data, rows, cols
-        data = join(data)
-        cols = join(cols)
-        rows = join(rows)
         
         # figure out how many indices there are in total
         size = state_index_map.size
         for error_tracker in error_trackers:
             size += error_tracker[1].size
         
-        flux_matrix = scipy.sparse.coo_matrix((data, (rows, cols)), (size, )*2)
-        #print '\t coo : %s' % repr(flux_matrix)
-        flux_matrix = flux_matrix.tocsr()
-        #print '\t csr : %s' % repr(flux_matrix)
-        flux_matrix.eliminate_zeros()
+        if len(data)==0:
+            flux_matrix = scipy.sparse.csr_matrix((size, )*2)
+        else:
+            def join(x):
+                if len(x) == 0:
+                    return []
+                
+                size = numpy.add.reduce([numpy.size(a) for a in x])
+                joined_x = numpy.zeros((size, ), dtype=x[0].dtype)
+                offset = 0
+                for a in x:
+                    a_size = numpy.size(a)
+                    joined_x[offset:offset+a_size] = a
+                    offset += a_size
+                return joined_x
+            
+            # merge data, rows, cols
+            data = join(data)
+            cols = join(cols)
+            rows = join(rows)
+            
+            flux_matrix = scipy.sparse.coo_matrix((data, (rows, cols)), (size, )*2)
+            #print '\t coo : %s' % repr(flux_matrix)
+            flux_matrix = flux_matrix.tocsr()
+            #print '\t csr : %s' % repr(flux_matrix)
         flux_matrix.sum_duplicates()
+        flux_matrix.eliminate_zeros()
         #print '\t csr (cleaned?) : %s' % repr(flux_matrix)
         flux_matrices.append(flux_matrix)
             
     return flux_matrices
 
-def create_diff_eqs(size, flux_matrices, time_dependencies):
-        
+def create_diff_eqs(size, flux_matrices, time_dependencies = None):
+    """
+    returns diff_eqs(t, y) instance to pass to Solver
+    
+    size : length of y vector
+    flux_matrices : list of flux_matrices for reactions
+    time_dependencies : dict of time dependent coefficient functions
+        keyed by subsets of reaction indices
+    """
+    
+    if time_dependencies is None:
+        time_dependencies = {}
+    assert type(time_dependencies) is dict
+    
+    def sum_flux_matrices(reaction_indices):
+        sum_matrix = scipy.sparse.csr_matrix((size, )*2)
+        for reaction_index in reaction_indices:
+            sum_matrix = sum_matrix + flux_matrices[reaction_index]
+        sum_matrix.sum_duplicates()
+        sum_matrix.eliminate_zeros()
+        return sum_matrix
+    
+    matrices = {}
+    const_indices = set(range(len(flux_matrices)))
+    for reaction_subset in time_dependencies:
+        const_indices.difference_update(reaction_subset)
+        matrices[reaction_subset] = sum_flux_matrices(reaction_subset)
+    
+    const_indices = frozenset(const_indices)
+    if const_indices:
+        matrices[const_indices] = sum_flux_matrices(const_indices)
+    
+    assert len(matrices) > 0, 'there must be at least one reaction'
+    
     def diff_eqs(t, p):
         """
-        this routine defines our mapping diff_eqs(t,p) ---> dp/dt(t,p)
-        which is later called by the ode solver
+        returns dp / dt for given t and p
         """
+        dp_dt = None
+        for reaction_subset in matrices:
+            term = matrices[reaction_subset]*p
+            if reaction_subset in time_dependencies:
+                term = term * time_dependencies[reaction_subset](t)
+            if dp_dt is not None:
+                dp_dt += term
+            else:
+                dp_dt = term
+        return dp_dt
         
-        inflated_shape = numpy.shape(p)
-        
-        # the net flux will be accumulated inside the array p_dot
-        p_dot = numpy.zeros(inflated_shape)
-        
-        for phi, flux_matrix in itertools.izip(time_dependencies,
-                                               flux_matrices):
-            p_dot += phi(t)*(flux_matrix*p)
-        
-        # return the net flux
-        return p_dot
-    
     return diff_eqs

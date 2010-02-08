@@ -136,7 +136,7 @@ def step_cme(p_0_sparse, t_0, delta_t, error_tol, states, num_mini_steps):
     state_index_map_offset += state_index_map.size
     
     
-    projection_dim = 4
+    error_projection_dim = 4
     def make_proj((i, j)):
         #return lambda *x : (x[0], x[1], x[i], x[j])
         return lambda *x : (x[0], x[1], x[i], x[j])
@@ -168,7 +168,7 @@ def step_cme(p_0_sparse, t_0, delta_t, error_tol, states, num_mini_steps):
         
         #print '\tfound %d projected error states' % num_error_states
         #print '\tvectorising projected error states'
-        error_vectstates = [[] for i in xrange(projection_dim)]
+        error_vectstates = [[] for i in xrange(error_projection_dim)]
         for state in error_states:
             for i, coord in enumerate(state):
                 error_vectstates[i].append(coord)
@@ -190,7 +190,8 @@ def step_cme(p_0_sparse, t_0, delta_t, error_tol, states, num_mini_steps):
 
     flux_matrices = fsp.create_flux_matrices(model,
                                              state_index_map,
-                                             error_trackers)
+                                             error_trackers,
+                                             error_projection_dim)
 
     # define pack / unpack as maps between dense np shaped vector p
     def pack((p, p_errors)):

@@ -2,16 +2,25 @@ import numpy
 import scipy.integrate
 
 class Solver(object):
-    def __init__(self, dy_dt, y_0, t_0 = 0.0):
+    def __init__(self, dy_dt, y_0, t_0 = 0.0, ode_config_callback = None):
         """
         Initialise a Solver using the supplied derivative function dy_dt,
         initial value y_0, and (optional) initial time t_0.
+        
+        Optionally, the ode_config_callback argument may also be specified.
+        This should be a function of the form
+        
+            ode_config_callback(ode_instance)
+        
+        where ode_instance is the scipy.integrate.ode object managed
+        internally by the solver.
         """
         self._dy_dt = dy_dt
         self._ode = None
         self._t = t_0
         self._y_0 = y_0
         self._custom_packing = False
+        self._ode_config_callback = ode_config_callback
     
     def set_packing(self, pack, unpack, transform_dy_dt=True):
         """
@@ -68,6 +77,8 @@ class Solver(object):
         ode = scipy.integrate.ode(packed_dy_dt)
         ode.set_integrator('vode', method='bdf')
         ode.set_initial_value(packed_y_0, self._t)
+        if self._ode_config_callback is not None:
+            self._ode_config_callback(ode)
         self._ode = ode
         self._y_0 = None
     

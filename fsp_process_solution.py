@@ -171,8 +171,9 @@ def plot_marginals(files):
         pylab.close()
 
 def main():
+    prefix = 'gene_toggle_'
     def solution_file(i):
-        file_name = 'solution_%04d.txt' % i
+        file_name = '%ssolution_%04d.txt' % (prefix, i)
         return file(file_name, 'r')
     files = [solution_file(i) for i in xrange(10)]
     #plot_marginals(files)
