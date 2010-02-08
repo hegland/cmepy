@@ -69,9 +69,9 @@ def create(model,
         
         p_0 : (optional) mapping from states in the domain to probabilities,
             for the initial probability distribution. If not specified,
-            and the origin of the state space can be inferred, defaults
-            to all probability concentrated at the origin, otherwise, a
-            ValueError will be raised.
+            and the initial state of the state space is given by the model,
+            defaults to all probability concentrated at the initial state,
+            otherwise, a ValueError will be raised.
         
         time_dependencies : (optional) mapping of time dependent coefficient
             functions keyed by subsets of reaction indices, with respect to the
@@ -85,15 +85,12 @@ def create(model,
         domain_states : (optional) array of states in the domain.
             By default, attempt to infer the domain states assuming a
             rectangular domain defined by the 'shape' entry of the model, and
-            optionally also the 'origin' entry. A ValueError is raised if both
-            domain_states and model['shape'] are unspecified.
+            optionally also the 'initial_state' entry. A ValueError is raised
+            if both domain_states and model['shape'] are unspecified.
     """
     
     validate.model(model)
     
-    assert type(sink) is bool
-    
-    origin = model.get(mdl.ORIGIN, None)
     
     # determine states in domain, then construct an enumeration of the
     # domain states
@@ -102,23 +99,19 @@ def create(model,
             lament = 'if no states given, model must contain key \'%s\''
             raise KeyError(lament % mdl.SHAPE)
         else:
-            # origin is now well-defined
-            if origin is None:
-                origin = (0,)*len(model[mdl.SHAPE])
-            domain_states = domain.from_rect(shape = model[mdl.SHAPE],
-                                             slices = None,
-                                             origin = origin)
+            domain_states = domain.from_rect(shape = model[mdl.SHAPE])
     
     domain_enum = state_enum.create(domain_states)
     
     # determine p_0, then construct a dense representation with respect to
     # the domain enumeration
+    initial_state = model.get(mdl.INITIAL_STATE, None)
     if p_0 is None:
-        if origin is None:
+        if initial_state is None:
             lament = 'if no p_0 given, model must contain key \'%s\''
-            raise ValueError(lament % mdl.ORIGIN)
+            raise ValueError(lament % mdl.INITIAL_STATE)
         else:
-            p_0 = {origin : 1.0}
+            p_0 = {initial_state : 1.0}
     
     member_flags = domain_enum.contains(domain.from_iter(p_0))
     if not numpy.logical_and.reduce(member_flags):

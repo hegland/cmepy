@@ -84,6 +84,7 @@ def gen_reaction_matrices(model,
     src_indices = domain_enum.indices(src_states)
     
     for (propensity, transition) in reactions:
+        
         # compute destination states for this transition
         transition = numpy.asarray(transition)[:, numpy.newaxis]
         dst_states = src_states + transition
@@ -115,7 +116,7 @@ def gen_reaction_matrices(model,
             int_dst_states = numpy.array(dst_states[:, interior])
             int_dst_indices = domain_enum.indices(int_dst_states)
             int_coefficients = compute_propensity(propensity,
-                                                  int_src_states)
+                                                  int_src_states)            
             
             # flux out
             data.append(-int_coefficients)

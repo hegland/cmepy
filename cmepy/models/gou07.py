@@ -23,7 +23,7 @@ def create_model_uni_dim(initial_copies = 10, rate = 0.001):
         species = ['P', 'Q', 'PQ'],
         species_counts = (lambda x : initial_copies - x, )*2 + (lambda x : x, ),
         shape = (initial_copies + 1, ),
-        origin = (0, )
+        initial_state = (0, )
     )
     return m
 
@@ -70,7 +70,7 @@ def create_model_quad_autocat(max_p=30,
         )
         
         shape = (max_p+1, max_q+1)
-        origin = (0, )*2
+        initial_state = (0, )*2
     else:
         model_name %= 'variable'
         s = lambda *x : x[2]
@@ -84,7 +84,7 @@ def create_model_quad_autocat(max_p=30,
         )
         
         shape = (max_p+1, max_q+1, s_0+1)
-        origin = (0, 0, 3, )
+        initial_state = (0, 0, 3, )
     
     m = model.create(
         name = model_name,
@@ -109,7 +109,7 @@ def create_model_quad_autocat(max_p=30,
         ),
         species_counts = ( p, q, s, d, ),
         shape = shape,
-        origin = origin
+        initial_state = initial_state
     )
     return m
 

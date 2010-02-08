@@ -30,7 +30,7 @@ def create_model_gene_toggle(max_s1_copies=100, max_s2_copies=100):
     transitions = ((1, 0), (-1, 0), (0, 1), (0, -1))
     
     shape = (max_s1_copies+1, max_s2_copies+1)
-    origin = (0, )*2
+    initial_state = (0, )*2
      
     return model.create(
         name = 'Gardner\'s gene toggle according to Munsky & Khammash',
@@ -40,7 +40,7 @@ def create_model_gene_toggle(max_s1_copies=100, max_s2_copies=100):
         propensities = propensities,
         transitions = transitions,
         shape = shape,
-        origin = origin
+        initial_state = initial_state
     )
 
 def main():

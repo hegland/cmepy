@@ -139,13 +139,13 @@ def validate_transitions(value):
         for coord in trans:
             must_be_int_like(coord, 'transition vector element')
 
-def validate_origin(value):
+def validate_initial_state(value):
     """
-    raises exception if value is not a valid model origin entry
+    raises exception if value is not a valid model initial_state entry
     """
-    must_have_length(value, 'origin')
+    must_have_length(value, 'initial state')
     for coord in value:
-        must_be_int_like(coord, 'origin element')
+        must_be_int_like(coord, 'initial state element')
 
 def validate_shape(value):
     """
@@ -182,8 +182,8 @@ def model(m):
         validate_species_names(m[mdl.SPECIES_NAMES])
     if mdl.SPECIES_COUNTS in m:
         validate_species_counts(m[mdl.SPECIES_COUNTS])
-    if mdl.ORIGIN in m:
-        validate_origin(m[mdl.ORIGIN])
+    if mdl.INITIAL_STATE in m:
+        validate_initial_state(m[mdl.INITIAL_STATE])
     if mdl.SHAPE in m:
         validate_shape(m[mdl.SHAPE])
     if mdl.REACTION_NAMES in m:
@@ -196,11 +196,11 @@ def model(m):
                 message % (mdl.SPECIES_NAMES, mdl.SPECIES_COUNTS, str(m))
             )
     
-    if (mdl.ORIGIN in m) and (mdl.SHAPE in m):
-        if len(m[mdl.ORIGIN]) != len(m[mdl.SHAPE]):
+    if (mdl.INITIAL_STATE in m) and (mdl.SHAPE in m):
+        if len(m[mdl.INITIAL_STATE]) != len(m[mdl.SHAPE]):
             message = 'mismatched lengths of %s and %s in model %s'
             raise ValueError(
-                message % (mdl.ORIGIN, mdl.SHAPE, str(m))
+                message % (mdl.INITIAL_STATE, mdl.SHAPE, str(m))
             )
     if mdl.REACTION_NAMES in m:
         if len(m[mdl.REACTION_NAMES]) != len(m[mdl.PROPENSITIES]):

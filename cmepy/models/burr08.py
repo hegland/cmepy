@@ -2,6 +2,8 @@
 model of two competing clonotypes
 """
 
+import math
+import numpy
 from cmepy import model
 
 def create_model_competing_clonotypes():
@@ -74,7 +76,7 @@ def create_model_competing_clonotypes():
             species_count_b,
         ),
         shape = shape,
-        origin = (10, 10)
+        initial_state = (10, 10)
     )
 
 def create_time_deps_competing_clonotypes():

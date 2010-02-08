@@ -98,7 +98,7 @@ def create_model(initial_copies = None):
             e1_copies,
             e2_copies,
         ),
-        origin = (0, 0, initial_copies['S'])
+        initial_state = (0, 0, initial_copies['S'])
     )
 
 def main():
@@ -110,13 +110,10 @@ def main():
     import cmepy.solver
     from cmepy import domain
     
-    model = create_model(initial_copies)
-    states = domain.from_iter(gen_states(initial_copies))
-    
     solver = cmepy.solver.create(
-        model,
+        model = create_model(),
         sink = True,
-        domain_states = states,
+        domain_states = domain.from_iter(gen_states()),
     )
     
     t_final = 10.0

@@ -28,5 +28,5 @@ DSMTS_001_01 = model.create(
         'X',
     ),
     shape = (200, ),
-    origin = (100, )
+    initial_state = (100, )
 )

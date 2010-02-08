@@ -49,7 +49,7 @@ def compare_against_poisson(rates, shape):
         propensities = props,
         transitions = transitions,
         shape = shape,
-        origin = (0, )*size
+        initial_state = (0, )*size
     )
     
     compare_against_exact(m,
@@ -63,7 +63,7 @@ def compare_against_binomial(rate, shape):
         propensities = (lambda *x : rate*(shape[0]-x[0]), ),
         transitions = ((1, ), ),
         shape = shape,
-        origin = (0, )
+        initial_state = (0, )
     )
         
     compare_against_exact(m,

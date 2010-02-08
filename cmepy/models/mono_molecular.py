@@ -30,7 +30,7 @@ A2B2C = model.create(
         'C',
     ),
     shape = (32, 32),
-    origin = (0, 0)
+    initial_state = (0, 0)
 )
 
 A2B2A = model.create(
@@ -58,5 +58,5 @@ A2B2A = model.create(
         'C',
     ),
     shape = (50, 60),
-    origin = (0, 0)
+    initial_state = (0, 0)
 )

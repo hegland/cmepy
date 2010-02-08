@@ -34,5 +34,5 @@ def create_model_michaelis_menten(s_0 = 50, e_0 = 10):
         propensities = props,
         transitions = ((-1, 1), (1, -1), (0, -1)),
         shape = (s_0 + 1, max(s_0, e_0) + 1),
-        origin = (s_0, 0)
+        initial_state = (s_0, 0)
     )

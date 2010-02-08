@@ -7,7 +7,7 @@ import cmepy.validate
 PROPENSITIES = 'propensities'
 TRANSITIONS = 'transitions'
 NAME = 'name'
-ORIGIN = 'origin'
+INITIAL_STATE = 'initial_state'
 SHAPE = 'shape'
 SPECIES_NAMES = 'species'
 SPECIES_COUNTS = 'species_counts'
@@ -16,7 +16,7 @@ ENTRIES = frozenset([
     PROPENSITIES,
     TRANSITIONS,
     NAME,
-    ORIGIN,
+    INITIAL_STATE,
     SHAPE,
     SPECIES_NAMES,
     SPECIES_COUNTS,
