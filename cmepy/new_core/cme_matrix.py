@@ -6,6 +6,22 @@ import itertools
 import numpy
 import scipy.sparse
 
+def compute_propensity(prop, states):
+    """
+    compute_propensity(prop, states) -> propensity evaluated over states
+    """
+    
+    num_states = numpy.shape(states)[1]
+    output_shape = (num_states, )
+    nu = prop(*states)
+    if numpy.shape(nu) == output_shape:
+        return nu
+    elif numpy.shape(nu) == ():
+        return nu*numpy.ones(output_shape)
+    else:
+        lament = 'data returned by propensity function %s has bad shape: %s'
+        raise ValueError(lament % (str(prop), str(numpy.shape(nu))))
+
 def optimise_csr_matrix(csr_matrix):
     """
     optimise_csr_matrix(csr_matrix) -> csr_matrix
@@ -95,7 +111,8 @@ def gen_reaction_matrices(model,
             int_src_indices = numpy.array(src_indices[interior])
             int_dst_states = numpy.array(dst_states[:, interior])
             int_dst_indices = domain_enum.indices(int_dst_states)
-            int_coefficients = propensity(*int_src_states)
+            int_coefficients = compute_propensity(propensity,
+                                                  int_src_states)
             
             # flux out
             data.append(-int_coefficients)
@@ -116,7 +133,8 @@ def gen_reaction_matrices(model,
             if num_valid_states > 0:
                 ext_src_indices = numpy.array(src_indices[exterior][valid])
                 ext_src_states = numpy.array(src_states[:, exterior][:, valid])
-                ext_coefficients = propensity(*ext_src_states)
+                ext_coefficients = compute_propensity(propensity,
+                                                      ext_src_states)
                 
                 shape = numpy.shape(ext_src_indices)
                 ext_dst_indices = sink_index * numpy.ones(shape,

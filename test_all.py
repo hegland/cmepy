@@ -17,7 +17,9 @@ SUB_PACKAGES = {ROOT_PACKAGE : ['core', 'new_core', ],
                               'recorder_tests',
                               'domain_tests',
                               'state_enum_tests',
-                              'lexarrayset_tests', ]}
+                              'lexarrayset_tests',
+                              'statistics_tests',
+                              'measurement_tests', ]}
 
 
 
@@ -69,6 +71,7 @@ def additional_tests(sub_packages, root_package):
     additional_tests() -> unittest.TestSuite
     """
     
+    print ''
     print '-- gathering test suites :'
     print ''
     test_suite = gather_suites(sub_packages, root_package)

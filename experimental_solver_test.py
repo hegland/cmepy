@@ -4,20 +4,20 @@ solves munsky_khammash_gene_toggle using experimental solver
 
 import numpy
 import cmepy.new_core.domain as domain
-import cmepy.new_core.cme_solver_experimental as cme_solver
-import cmepy.new_core.recorder as cme_recorder
+from cmepy.new_core.cme_solver_experimental import create_cme_solver
+from cmepy.new_core.recorder import CmeRecorder
 import pylab
 
 from munsky_khammash_gene_toggle_08 import create_model
 
 def plot_recorded_data(recorder, title):
     """
-    plot recorder species count expectation and standard devation
+    plot recorder species count expectation and standard deviation
     """
     pylab.figure()
     for measurement in recorder.measurements('species'):
         pylab.plot(measurement.times,
-                   measurement.expected_value,
+                   measurement.expectation,
                    label = measurement.name)
     pylab.legend()
     pylab.title(title+': species count expected value')
@@ -48,15 +48,13 @@ def main():
     domain_states_b = set(domain.to_iter(domain.from_rect(b_shape)))
     states = domain.from_iter(domain_states_a | domain_states_b)
     
-    solver = cme_solver.create_cme_solver(model,
-                                          sink = True,
-                                          domain_states = states)
+    solver = create_cme_solver(model,
+                               sink = True,
+                               domain_states = states)
     
-    recorder = cme_recorder.CmeRecorder(model)
-    recorder.add_target('species',
-                        ['expected value', 'standard deviation'],
-                        model['species'],
-                        model['species counts'])
+    recorder = CmeRecorder(('species',
+                            model['species'],
+                            model['species counts']))
     
     time_steps = numpy.linspace(0.0, 100.0, 101)
     for t in time_steps:
@@ -66,14 +64,7 @@ def main():
         print '\ttime = %g' % t
         print '\tsink state probability %g' % p_sink
         
-        # translate solution from sparse mapping format to
-        # rectangular dense array, so recorder can understand it
-        
-        p_dense = numpy.zeros(model['np'])
-        for state, probability in p.iteritems():
-            p_dense[state] = probability
-        
-        recorder.write(t, p_dense)
+        recorder.write(t, p)
     
     plot_recorded_data(recorder, model['doc'])
     pylab.show()

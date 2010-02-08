@@ -1,9 +1,7 @@
 import numpy
 
-import cmepy.new_core.cme_solver as cme_solver
-import cmepy.new_core.recorder as cme_recorder
-
-import pylab
+from cmepy.new_core.cme_solver_experimental import create_cme_solver
+from cmepy.new_core.recorder import CmeRecorder, display_plots
 
 def create_gou07_c_model(max_p_trunc, max_q_trunc, s_0=10, d_0=2, vol=1.0):
     """
@@ -115,25 +113,7 @@ def create_gou07_d_model(max_p_trunc, max_q_trunc, max_s_trunc, d_0=2, vol=1.0):
              'species' : species,
              'species counts' : species_counts,
              'np' : np}
-    return model
-
-def display_plots(recorder, title):
-    pylab.figure()
-    for measurement in recorder.measurements('species'):
-        pylab.plot(measurement.times,
-                   measurement.expected_value,
-                   label = measurement.name)
-    pylab.legend()
-    pylab.title(title+': species count expected value')
-    
-    pylab.figure()
-    for measurement in recorder.measurements('species'):
-        pylab.plot(measurement.times,
-                   measurement.standard_deviation,
-                   label = measurement.name)
-    pylab.legend()
-    pylab.title(title+': species count standard deviation')
-    
+    return model    
 
 def main_gou07_c():
 
@@ -142,20 +122,18 @@ def main_gou07_c():
     
     model = create_gou07_c_model(max_p_trunc, max_q_trunc)
     
-    solver = cme_solver.create_cme_solver(model)
-    recorder = cme_recorder.CmeRecorder(model)
-    recorder.add_target('species',
-                        ['expected value', 'standard deviation'],
-                        model['species'][0:2],
-                        model['species counts'][0:2])
+    solver = create_cme_solver(model, sink = True)
+    recorder = CmeRecorder(('species',
+                            model['species'][0:2],
+                            model['species counts'][0:2]))
     time_steps = numpy.linspace(0.0, 1000.0, 101)
     for t in time_steps:
-        print ('stepping to t = %f' % t)
+        print ('t = %f' % t)
         solver.step(t)
-        recorder.write(t, solver.y)
+        p, p_sink = solver.y
+        recorder.write(t, p)
     
-    display_plots(recorder, model['doc'])
-    pylab.show()
+    display_plots(recorder, 'species', title = model['doc'])
 
 def main_gou07_d():
 
@@ -165,35 +143,23 @@ def main_gou07_d():
     
     model = create_gou07_d_model(max_p_trunc, max_q_trunc, max_s_trunc)
     
-    # we need to explicitly specify a non standard p_0
-    p_0 = numpy.zeros(model['np'])
     # initial distribution concentrated at 0 copies of P, Q, maximal copies of S
-    p_0[0, 0, -1] = 1.0
-    solver = cme_solver.create_cme_solver(model, p_0)
+    p_0 = {(0, 0, max_s_trunc) : 1.0}
+    solver = create_cme_solver(model,
+                               sink = True,
+                               p_0 = p_0)
     
-    recorder = cme_recorder.CmeRecorder(model)
-    recorder.add_target('species',
-                        ['expected value', 'standard deviation'],
-                        model['species'][0:3],
-                        model['species counts'][0:3])
+    recorder = CmeRecorder(('species',
+                            model['species'][0:3],
+                            model['species counts'][0:3]))
     time_steps = numpy.linspace(0.0, 1000.0, 101)
     for t in time_steps:
-        print ('stepping to t = %f' % t)
+        print ('t = %f' % t)
         solver.step(t)
-        recorder.write(t, solver.y)
+        p, p_sink = solver.y
+        recorder.write(t, p)
     
-    display_plots(recorder, model['doc'])
-    pylab.figure()
-    pylab.contourf(numpy.add.reduce(solver.y, axis=2))
-    pylab.title('P & Q')
-    pylab.figure()
-    pylab.contourf(numpy.add.reduce(solver.y, axis=1))
-    pylab.title('P & S')
-    pylab.figure()
-    pylab.contourf(numpy.add.reduce(solver.y, axis=0))
-    pylab.title('Q & S')
-    
-    pylab.show()
+    display_plots(recorder, 'species', title = model['doc'])
 
 def main():
     main_gou07_d()

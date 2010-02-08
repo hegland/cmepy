@@ -121,6 +121,10 @@ def create_cme_solver(model,
         else:
             p_0 = {origin : 1.0}
     
+    member_flags = domain_enum.contains(domain.from_iter(p_0))
+    if not numpy.logical_and.reduce(member_flags):
+        raise ValueError('support of p_0 is not a subset of domain_states')
+    
     # compute reaction matrices and use them to define differential equations
     gen_matrices = cme_matrix.gen_reaction_matrices(model,
                                                     domain_enum,
