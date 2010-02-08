@@ -112,3 +112,28 @@ def create_model_quad_autocat(max_p=30,
         origin = origin
     )
     return m
+
+def main():
+    
+    import cmepy.solver
+    import cmepy.recorder
+    
+    m = create_model_quad_autocat(fixed_s = False)
+    
+    solver = cmepy.solver.create(
+        m,
+        sink = True
+    )
+    recorder = cmepy.recorder.create(
+        (model.SPECIES_NAMES,
+         m[model.SPECIES_NAMES],
+         m[model.SPECIES_COUNTS])
+    )
+    time_steps = numpy.linspace(0.0, 1000.0, 101)
+    for t in time_steps:
+        solver.step(t)
+        p, p_sink = solver.y
+        recorder.write(t, p)
+        print 't = %g; p_sink = %g' % (t, p_sink)
+    
+    cmepy.recorder.display_plots(recorder, title = m.name)
