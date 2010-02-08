@@ -14,7 +14,7 @@ from distribute_setup import use_setuptools
 use_setuptools(no_fake = True)
 
 
-VERSION = '0.1.0'
+VERSION = '0.2.0'
 
 
 from setuptools import setup, find_packages
