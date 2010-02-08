@@ -17,4 +17,8 @@ def additional_tests():
     
     return all_test_suite
 
+if __name__ == '__main__':
+    suite = additional_tests()
+    unittest.TextTestRunner(verbosity=2).run(suite)
+
 

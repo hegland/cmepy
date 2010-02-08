@@ -27,8 +27,9 @@ class CmeSolver(Solver):
             self.set_solver_params(np = model['np'])
         
     def set_solver_params(self, **args):
-        assert('np' in args), 'missing argument \'np\' : shape of state space'
-        self._args = args
+        if self._args is None:
+            self._args = {}
+        self._args.update(args)
     
     def _begin(self):
         if self.p0 is None:
@@ -39,8 +40,8 @@ class CmeSolver(Solver):
             self.p0 = p0
         
         cme_args = {}
+        cme_args.update(self.model)
         cme_args.update(self._args)
-        cme_args['propensities'] = self.model['propensities']
         cme_args['p0'] = self.p0
         cme_args['t0'] = self.t0
         self.cme = cmepy.core.cme(**cme_args)
