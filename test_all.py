@@ -10,9 +10,6 @@ def additional_tests():
     from cmepy.core import cme_tests
     test_suites.add(cme_tests.suite())
     
-    from cmepy.solver.core_cme_solver import cme_solver_tests
-    test_suites.add(cme_solver_tests.suite())
-    
     from cmepy.new_core import ode_solver_tests
     test_suites.add(ode_solver_tests.suite())
     

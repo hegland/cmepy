@@ -1,3 +1,6 @@
+# xxx todo refactor tests now old cme solver support has been snipped
+# xxx todo port old cmepy.core.cme_tests to here
+
 import unittest
 from test import test_support
 
@@ -7,7 +10,6 @@ import math
 import numpy
 from numpy.testing.utils import assert_almost_equal
 
-import cmepy.solver
 import cmepy.models
 
 import cmepy.new_core.ode_solver as ode_solver
@@ -123,17 +125,6 @@ class CmeSolverTests(unittest.TestCase):
                 new_solver.step(t)
                 test_results.append(new_solver.y)
             
-            # compute results for same model via old solver
-            old_solver = cmepy.solver.CmeSolver(model)
-            old_results = []
-            for t in time_steps:
-                old_solver.step(t)
-                old_results.append(old_solver.get_p())
-            
-            # compare results and verify they agree
-            for test_result, old_result in itertools.izip(test_results,
-                                                          old_results):
-                assert_almost_equal(test_result, old_result)
     
     def testTimeDependentFluxEvaluatorA(self):
         for model in self.models:
@@ -160,20 +151,6 @@ class CmeSolverTests(unittest.TestCase):
             for t in time_steps:
                 new_solver.step(t)
                 new_results.append(new_solver.y)
-            
-            model_old = dict(model)
-            model_old['time_dependence'] = time_dependencies
-            old_solver = cmepy.solver.CmeSolver(model_old)
-            
-            old_results = []
-            for t in time_steps:
-                old_solver.step(t)
-                old_results.append(old_solver.get_p())
-            
-            # compare results and verify they agree
-            for new_result, old_result in itertools.izip(new_results,
-                                                          old_results):
-                assert_almost_equal(new_result, old_result)
 
 def suite():
     suite = unittest.TestLoader().loadTestsFromTestCase(CmeSolverTests)

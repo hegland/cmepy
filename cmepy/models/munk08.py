@@ -1,5 +1,13 @@
 """
-todo: doc explaining where these models come from
+gene toggle model
+
+@conference{munsky2008computation,
+  title={{Computation of switch time distributions in stochastic gene regulatory networks}},
+  author={Munsky, B. and Khammash, M.},
+  booktitle={Proc. 2008 American Control Conference.(June 2008)},
+  pages={2761--2766}
+}
+
 """
 
 from numpy import maximum

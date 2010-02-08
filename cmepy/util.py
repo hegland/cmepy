@@ -2,6 +2,9 @@
 A few utility routines. 27/5/09. R. Fletcher-Costin, ANU
 """
 
+import itertools
+import numpy
+
 def indices_ext(shape, slices, origin=None):
     """
     An interface to numpy's mgrid routine, supporting simpler slicing notation
@@ -17,18 +20,15 @@ def indices_ext(shape, slices, origin=None):
                 the returned indices
     """
     
-    from itertools import izip
-    from numpy import mgrid
-    
     assert (len(shape)==len(slices))
     
     # derive concrete slices from abstract slices using provided shape
-    slices_concrete = [slice(*sl.indices(n)) for (sl, n) in izip(slices, shape)]
-    indices = mgrid[slices_concrete]
+    slices_concrete = [slice(*sl.indices(n)) for (sl, n) in itertools.izip(slices, shape)]
+    indices = numpy.mgrid[slices_concrete]
     
     if origin is not None:
         assert(len(origin)==len(shape))
         # offset indices by origin
-        indices = [x+o for (x, o) in izip(indices, origin)]
+        indices = [x+o for (x, o) in itertools.izip(indices, origin)]
     
     return indices 
