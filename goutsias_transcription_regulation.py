@@ -27,6 +27,7 @@ a time-independent approximation of this example was also considered by
 import numpy
 import cmepy.solver
 import cmepy.recorder
+import cmepy.model
 from cmepy.util import non_neg
 
 def create_time_dependencies():
@@ -45,95 +46,116 @@ def create_time_dependencies():
     
     return {frozenset([4, 6, 8]) : phi}
 
-def create_model(dna_count):
-
-    c = {'DNA' : lambda *x : x[0],
-         'DNA-D' : lambda *x : x[1],
-         'DNA-2D' : lambda *x : dna_count - x[0] - x[1],
-         'RNA' : lambda *x : x[2],
-         'M' : lambda *x : x[3],
-         'D' : lambda *x : x[4], }
+def create_model(dna_count=2, rna_max=15, m_max=15, d_max=15):
     
-    k = (4.3e-2,
-         7.0e-4,
-         7.8e-2,
-         3.9e-3,
-         1.2e7,
-         4.791e-1,
-         1.2e5,
-         8.765e-12,
-         1.0e8,
-         0.5, )
+    # define mappings from state space to species copy counts
+    dna =  lambda *x : x[0]
+    dna_d = lambda *x : x[1]
+    dna_2d = lambda *x : dna_count - x[0] - x[1]
+    rna = lambda *x : x[2]
+    m = lambda *x : x[3]
+    d = lambda *x : x[4]
     
-    props = (lambda *x : k[0]*c['RNA'](*x),
-             lambda *x : k[1]*c['M'](*x),
-             lambda *x : k[2]*c['DNA-D'](*x),
-             lambda *x : k[3]*c['RNA'](*x), 
-             lambda *x : k[4]*c['D'](*x)*c['D'](*x), 
-             lambda *x : k[5]*c['DNA-D'](*x), 
-             lambda *x : k[6]*c['DNA-D'](*x)*c['D'](*x), 
-             lambda *x : k[7]*c['DNA-2D'](*x), 
-             lambda *x : k[8]*0.5*c['M'](*x)*non_neg(c['M'](*x)-1), 
-             lambda *x : k[9]*c['D'](*x), )
+    # define reaction propensity constants
+    k = (
+        4.3e-2,
+        7.0e-4,
+        7.8e-2,
+        3.9e-3,
+        1.2e7,
+        4.791e-1,
+        1.2e5,
+        8.765e-12,
+        1.0e8,
+        0.5,
+    )
     
-    offsets = ((0, 0, 0, 1, 0),     # RNA -> RNA + M
-               (0, 0, 0, -1, 0),    # M -> *
-               (0, 0, 1, 0, 0),     # DNA-D -> RNA + DNA-D
-               (0, 0, 1, 0, 0),     # RNA -> *
-               (-1, 1, 0, 0, -1),   # DNA + D -> DNA-D
-               (1, -1, 0, 0, 1),    # DNA-D -> DNA + D
-               (0, -1, 0, 0, -1),   # DNA-D + D -> DNA-2D
-               (0, 1, 0, 0, 1),     # DNA-2D -> DNA-D + D
-               (0, 0, 0, -2, 1),    # M + M -> D
-               (0, 0, 0, 2, -1), )  # D -> M + M
-    
-    species_names = []
-    species_counts = []
-    for key, value in c.iteritems():
-        species_names.append(key)
-        species_counts.append(value)
-    
-    origin = (dna_count, 0, 0, 2, 6)
-    
-    model = {'doc' : 'Goutsias transcription regulation',
-             'species' : species_names,
-             'species counts' : species_counts,
-             'propensities' : props,
-             'offset_vectors' : offsets,
-             'norigin' : origin }
-    return model
+    return cmepy.model.create(
+        name = 'Goutsias transcription regulation',
+        species = (
+            'DNA',
+            'DNA-D',
+            'DNA-2D',
+            'RNA',
+            'M',
+            'D',
+        ),
+        species_counts = (
+            dna,
+            dna_d,
+            dna_2d,
+            rna,
+            m,
+            d,
+        ),
+        reactions = (
+            'RNA -> RNA + M',
+            'M -> *',
+            'DNA-D -> RNA + DNA-D',
+            'RNA -> *',
+            'DNA + D -> DNA-D',
+            'DNA-D -> DNA + D',
+            'DNA-D + D -> DNA-2D',
+            'DNA-2D -> DNA-D + D',
+            'M + M -> D',
+            'D -> M + M',
+        ),
+        propensities = (
+            lambda *x : k[0] * rna(*x),
+            lambda *x : k[1] * m(*x),
+            lambda *x : k[2] * dna_d(*x),
+            lambda *x : k[3] * rna(*x), 
+            lambda *x : k[4] * dna(*x) * d(*x), 
+            lambda *x : k[5] * dna_d(*x), 
+            lambda *x : k[6] * dna_d(*x) * d(*x), 
+            lambda *x : k[7] * dna_2d(*x), 
+            lambda *x : k[8] * 0.5 * m(*x) * non_neg(m(*x) - 1), 
+            lambda *x : k[9] * d(*x),
+        ),
+        transitions = (
+            (0, 0, 0, 1, 0),
+            (0, 0, 0, -1, 0),
+            (0, 0, 1, 0, 0),
+            (0, 0, 1, 0, 0),
+            (-1, 1, 0, 0, -1),
+            (1, -1, 0, 0, 1),
+            (0, -1, 0, 0, -1),
+            (0, 1, 0, 0, 1),
+            (0, 0, 0, -2, 1),
+            (0, 0, 0, 2, -1),
+        ),
+        shape = (dna_count+1, )*2 + (rna_max+1, m_max+1, d_max+1),
+        initial_state = (dna_count, 0, 0, 2, 6)
+    )
 
 def main():
-    dna_count = 2
-    rna_max = 15
-    m_max = 15
-    d_max = 15
-    model = create_model(dna_count)
-    np = (dna_count+1, )*2 + (rna_max+1, m_max+1, d_max+1)
-    model['np']= np
+    m = create_model()
     
     solver = cmepy.solver.create(
-        model,
+        m,
         sink = True,
         time_dependencies = create_time_dependencies()
     )
     
     recorder = cmepy.recorder.create(
-        ('species',
-         model['species'],
-         model['species counts'])
+        (cmepy.model.SPECIES_NAMES,
+         m[cmepy.model.SPECIES_NAMES],
+         m[cmepy.model.SPECIES_COUNTS])
     )
     
-    t_final = 0.01 
-    time_steps = numpy.linspace(0.0, t_final, 21)
+    t_final = 60.0 
+    time_steps = numpy.linspace(0.0, t_final, 61)
     for t in time_steps:
-        print 't = %f' % t
         solver.step(t)
         p, p_sink = solver.y
-        print 'p_sink = %f' % p_sink
+        print 't = %g; p_sink = %g' % (t, p_sink)
         recorder.write(t, p)
     
-    cmepy.recorder.display_plots(recorder, 'species', title = model['doc'])
+    cmepy.recorder.display_plots(
+        recorder,
+        cmepy.model.SPECIES_NAMES,
+        title = m[cmepy.model.NAME]
+    )
 
 if __name__ == '__main__':
     main()

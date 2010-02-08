@@ -18,7 +18,7 @@ class ModelTests(unittest.TestCase):
     def test_dual_enzymatic_models(self):
         from cmepy.models import dual_enzymatic
         m = dual_enzymatic.create_model()
-        states = set(x for x in dual_enzymatic.gen_states())
+        states = set(dual_enzymatic.gen_states())
     
     def test_gou07_models(self):
         from cmepy.models import gou07
@@ -38,6 +38,11 @@ class ModelTests(unittest.TestCase):
     def test_munk08_models(self):
         from cmepy.models import munk08
         m = munk08.create_model_gene_toggle()
+    
+    def test_pap_pili_models(self):
+        from cmepy.models import pap_pili
+        m = pap_pili.create_model()
+        states = set(pap_pili.gen_states())
 
 def suite():
     suite = unittest.TestLoader().loadTestsFromTestCase(ModelTests)
