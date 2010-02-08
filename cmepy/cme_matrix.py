@@ -5,6 +5,7 @@ Builds CME matrix for dp/dt, broken into terms for each reaction.
 import itertools
 import numpy
 import scipy.sparse
+from cmepy import validate
 
 def compute_propensity(prop, states):
     """
@@ -64,6 +65,8 @@ def gen_reaction_matrices(model,
         
         See: non_neg_states(state_array)
     """
+    
+    validate.model(model)
     
     if domain_enum.offset != 0:
         raise NotImplementedError('non-zero domain_enum offset unsupported')

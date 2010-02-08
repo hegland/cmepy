@@ -3,7 +3,7 @@ experimental cme_solver implementation
 """
 
 import numpy
-from cmepy import cme_matrix, domain, ode_solver, state_enum
+from cmepy import cme_matrix, domain, ode_solver, state_enum, validate
 
 def create_packing_functions(domain_enum):
     """
@@ -87,6 +87,8 @@ def create(model,
             optionally also the 'norigin' entry. A ValueError is raised if both
             domain_states and model['np'] are unspecified.
     """
+    
+    validate.model(model)
     
     assert type(sink) is bool
     
