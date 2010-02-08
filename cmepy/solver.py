@@ -3,11 +3,7 @@ experimental cme_solver implementation
 """
 
 import numpy
-
-import cmepy.new_core.ode_solver as ode_solver
-import cmepy.new_core.cme_matrix as cme_matrix
-import cmepy.new_core.state_enum as state_enum
-import cmepy.new_core.domain as domain
+from cmepy import cme_matrix, domain, ode_solver, state_enum
 
 def create_packing_functions(domain_enum):
     """
@@ -49,13 +45,13 @@ def create_packing_functions(domain_enum):
     
     return (pack, unpack)
 
-def create_cme_solver(model,
-                      sink,
-                      p_0=None,
-                      time_dependencies=None,
-                      domain_states=None):
+def create(model,
+           sink,
+           p_0=None,
+           time_dependencies=None,
+           domain_states=None):
     """
-    create_cme_solver(model,sink[,p_0,time_dependencies,states]) -> solver
+    create(model,sink[,p_0,time_dependencies,states]) -> solver
     
     returns a solver for the Chemical Master Equation of the given model.
     

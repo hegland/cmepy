@@ -6,17 +6,17 @@ import itertools
 import numpy
 from numpy.testing.utils import assert_array_equal
 
-import cmepy.new_core.domain as domain
+import cmepy.domain as domain
 
 
 class DomainTests(unittest.TestCase):
-    def testRectLatticeDomain(self):
+    def test_rect_domain(self):
         shape = (3, 1, 3, 8)
         states = domain.from_rect(shape)
         goal_states = numpy.reshape(numpy.indices(shape), (len(shape), -1))
         assert_array_equal(states, goal_states)
     
-    def testRectLatticeOffsetDomain(self):
+    def test_rect_offset_domain(self):
         shape = (4, 7, 3)
         origin = (3, -2, 2)
         states = domain.from_rect(shape, origin=origin)
@@ -25,7 +25,7 @@ class DomainTests(unittest.TestCase):
         goal_states += vect_origin
         assert_array_equal(states, goal_states)
     
-    def testSparseDomainFromDict(self):
+    def test_sparse_domain_from_dict(self):
         p_0 = {(4, 3) : 0.1,
                (9, 4) : 0.3,
                (11, -1) : 0.2,
@@ -37,7 +37,7 @@ class DomainTests(unittest.TestCase):
         for i, goal_state in enumerate(goal_states):
             assert_array_equal(states[:, i], goal_state)
     
-    def testSparseDomainFromSet(self):
+    def test_sparse_domain_from_set(self):
         sparse_states = set([(1, 2, 3),
                              (2, 3, 4),
                              (3, 4, 5),
@@ -52,7 +52,7 @@ class DomainTests(unittest.TestCase):
         for i, goal_state in enumerate(goal_states):
             assert_array_equal(states[:, i], goal_state)
     
-    def testIterFromDenseStates(self):
+    def test_iter_from_dense_states(self):
         sparse_states = set([(1, 2, 3),
                              (2, 3, 4),
                              (3, 4, 5),
@@ -66,7 +66,7 @@ class DomainTests(unittest.TestCase):
         for (state, goal_state) in itertools.izip(state_iter, sparse_states):
             assert state == goal_state
     
-    def testSparseDomainFromMapping(self):
+    def test_sparse_domain_from_mapping(self):
         p_0 = {(4, 3) : 0.1,
                (9, 4) : 0.3,
                (11, -1) : 0.2,

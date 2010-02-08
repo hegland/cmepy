@@ -4,10 +4,10 @@ import numpy
 from numpy.testing.utils import assert_almost_equal
 
 
-from cmepy.new_core import statistics
+from cmepy import statistics
 
 class TestStatistics(unittest.TestCase):
-    def testOneD(self):
+    def test_one_dee_distributions(self):
         p_1 = {(1, ) : 0.1,
                (2, ) : 0.2,
                (3, ) : 0.3,
@@ -26,7 +26,7 @@ class TestStatistics(unittest.TestCase):
         sigma_squared_goal = numpy.asarray([1.0])
         assert_almost_equal(sigma_squared, sigma_squared_goal)
     
-    def testTwoD(self):
+    def test_two_dee_distributions(self):
         p_2 = {(0, 0) : 0.2,
                (0, 1) : 0.3,
                (1, 0) : 0.2,

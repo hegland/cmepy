@@ -1,7 +1,7 @@
 import numpy
 
-from cmepy.new_core.cme_solver_experimental import create_cme_solver
-from cmepy.new_core.recorder import CmeRecorder, display_plots
+import cmepy.solver
+import cmepy.recorder
 
 def create_gou07_c_model(max_p_trunc, max_q_trunc, s_0=10, d_0=2, vol=1.0):
     """
@@ -122,10 +122,15 @@ def main_gou07_c():
     
     model = create_gou07_c_model(max_p_trunc, max_q_trunc)
     
-    solver = create_cme_solver(model, sink = True)
-    recorder = CmeRecorder(('species',
-                            model['species'][0:2],
-                            model['species counts'][0:2]))
+    solver = cmepy.solver.create(
+        model,
+        sink = True
+    )
+    recorder = cmepy.recorder.create(
+        ('species',
+         model['species'][:2],
+         model['species counts'][:2])
+    )
     time_steps = numpy.linspace(0.0, 1000.0, 101)
     for t in time_steps:
         print ('t = %f' % t)
@@ -133,7 +138,7 @@ def main_gou07_c():
         p, p_sink = solver.y
         recorder.write(t, p)
     
-    display_plots(recorder, 'species', title = model['doc'])
+    cmepy.recorder.display_plots(recorder, 'species', title = model['doc'])
 
 def main_gou07_d():
 
@@ -145,13 +150,18 @@ def main_gou07_d():
     
     # initial distribution concentrated at 0 copies of P, Q, maximal copies of S
     p_0 = {(0, 0, max_s_trunc) : 1.0}
-    solver = create_cme_solver(model,
-                               sink = True,
-                               p_0 = p_0)
+    solver = cmepy.solver.create(
+        model,
+        sink = True,
+        p_0 = p_0
+    )
     
-    recorder = CmeRecorder(('species',
-                            model['species'][0:3],
-                            model['species counts'][0:3]))
+    recorder = cmepy.recorder.create(
+        ('species',
+         model['species'][:3],
+         model['species counts'][:3])
+    )
+    
     time_steps = numpy.linspace(0.0, 1000.0, 101)
     for t in time_steps:
         print ('t = %f' % t)
@@ -159,7 +169,7 @@ def main_gou07_d():
         p, p_sink = solver.y
         recorder.write(t, p)
     
-    display_plots(recorder, 'species', title = model['doc'])
+    cmepy.recorder.display_plots(recorder, 'species', title = model['doc'])
 
 def main():
     main_gou07_d()

@@ -16,12 +16,10 @@ This is the second example from Munsky & Khammash :
 
 import numpy
 
-import cmepy.new_core.cme_solver as cme_solver
-import cmepy.new_core.recorder as cme_recorder
+import cmepy.solver
+import cmepy.recorder
 
-import pylab
-
-def create_pap_pili_model(max_papi, papi_count, dna_count, lrp_count):
+def create_model(max_papi, papi_count, dna_count, lrp_count):
     # define mapping from state space to species counts
     c = {'DNA' : lambda *x : x[0],
          'DNA-LRP' : lambda *x : x[1],
@@ -63,54 +61,42 @@ def create_pap_pili_model(max_papi, papi_count, dna_count, lrp_count):
         species_names.append(key)
         species_counts.append(value)
     
+    origin = (dna_count+1, 0, 0, papi_count)
     model = {'doc' : 'pap-pili epigenetic switch',
              'species' : species_names,
              'species counts' : species_counts,
              'propensities' : props,
              'offset_vectors' : offsets,
-             'np' : np, }
-    p_0 = numpy.zeros(np)
-    p_0[-1, 0, 0, papi_count] = 1.0
-    return model, p_0
+             'np' : np,
+             'norigin' : origin}
+    return model
 
-def display_plots(recorder, title):
-    pylab.figure()
-    for measurement in recorder.measurements('species'):
-        pylab.plot(measurement.times,
-                   measurement.expected_value,
-                   label = measurement.name)
-    pylab.legend()
-    pylab.title(title+': species count expected value')
+def main():
+    model = create_model(
+        max_papi = 50,
+        papi_count = 5,
+        dna_count = 1,
+        lrp_count = 100
+    )
     
-    pylab.figure()
-    for measurement in recorder.measurements('species'):
-        pylab.plot(measurement.times,
-                   measurement.standard_deviation,
-                   label = measurement.name)
-    pylab.legend()
-    pylab.title(title+': species count standard deviation')
-
-def main_pap_pili():
-    model, p_0 = create_pap_pili_model(max_papi = 50,
-                                       papi_count = 5,
-                                       dna_count = 1,
-                                       lrp_count = 100)
-    
-    solver = cme_solver.create_cme_solver(model, p_0)
-    recorder = cme_recorder.CmeRecorder(model)
-    recorder.add_target('species',
-                        ['expected value', 'standard deviation'],
-                        model['species'],
-                        model['species counts'])
+    solver = cmepy.solver.create(
+        model,
+        sink = True
+    )
+    recorder = cmepy.recorder.create(
+        ('species',
+         model['species'],
+         model['species counts'])
+    )
     
     time_steps = numpy.linspace(0.0, 10.0, 101)
     for t in time_steps:
-        print ('stepping to t = %f' % t)
+        print 't = %g' % t
         solver.step(t)
-        recorder.write(t, solver.y)
-    
-    display_plots(recorder, model['doc'])
-    pylab.show()
+        p, p_sink = solver.y
+        print 'p_sink = %g' % p_sink
+        recorder.write(t, p)
+    cmepy.recorder.display_plots(recorder, 'species', title = model['doc'])
 
 if __name__ == '__main__':
-    main_pap_pili()
+    main()

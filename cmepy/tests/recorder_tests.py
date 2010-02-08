@@ -6,8 +6,7 @@ import itertools
 import numpy
 from numpy.testing.utils import assert_almost_equal
 
-from cmepy.new_core.recorder import CmeRecorder
-from cmepy.new_core import domain
+import cmepy.recorder
 
 class RecorderTests(unittest.TestCase):
     # XXX TODO

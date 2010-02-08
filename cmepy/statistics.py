@@ -4,7 +4,7 @@ Statistical utilities for working with CME solver output.
 
 import operator
 import numpy
-from cmepy.new_core import domain
+from cmepy import domain
 
 class Distribution(dict):
     """
@@ -25,10 +25,8 @@ class Distribution(dict):
             p = {}
         dict.__init__(self, p)
     
-    def _get_statistics(self):
-        """
-        return mapping of bound statistical methods keyed by method name
-        """
+    @property
+    def statistics(self):
         return {
             'expectation' : self.expectation,
             'expected_value' : self.expectation,
@@ -36,11 +34,11 @@ class Distribution(dict):
             'covariance' : self.covariance,
             'standard_deviation' : self.standard_deviation
         }
-    statistics = property(_get_statistics)
     
-    def _get_dimension(self):
+    @property
+    def dimension(self):
         """
-        infer dimension of state space of this distribution
+        inferred dimension of state space of this distribution
         """
         # attempt to infer dimension of state space
         if self:
@@ -56,7 +54,6 @@ class Distribution(dict):
         else:
             # empty distributions have dimension zero
             return 0
-    dimension = property(_get_dimension)
     
     def map(self, f, g=None):
         """

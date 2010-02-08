@@ -4,11 +4,11 @@ from test import test_support
 import numpy
 from numpy.testing.utils import assert_array_equal
 
-import cmepy.new_core.state_enum as state_enum
+import cmepy.state_enum as state_enum
 
 class StateEnumTests(unittest.TestCase):
         
-    def testSimpleInitialisation(self):
+    def test_simple_init(self):
         
         states = [[0, 0, 1, 1, 2, 1, 2],
                   [0, 1, 0, 1, 1, 2, 2]]
@@ -34,7 +34,7 @@ class StateEnumTests(unittest.TestCase):
         
         assert_array_equal(enum.indices(states), order)
     
-    def testNonUniqueStateLookup(self):
+    def test_non_unique_indices_query(self):
         states = [[0, 0, 1, 1, 2, 7, 2],
                   [0, 1, 0, 1, 1, 0, 2]]
         
@@ -57,7 +57,7 @@ class StateEnumTests(unittest.TestCase):
         assert_array_equal(indices,
                            [2, 5, 1, 6, 1, 2, 2, 6, 4])
         
-    def testNonUniqueContainsQuery(self):
+    def test_non_unique_contains_query(self):
         states = [[0, 0, 1, 1, 2, 7, 2],
                   [0, 1, 0, 1, 1, 0, 2]]
         
@@ -84,7 +84,7 @@ class StateEnumTests(unittest.TestCase):
         assert_array_equal(member_flags,
                            goal_member_flags)
     
-    def testNonUniqueStateLookupWithOffset(self):
+    def test_non_unique_indices_query_offset(self):
         states = [[0, 0, 1, 1, 2, 7, 2],
                   [0, 1, 0, 1, 1, 0, 2]]
         
@@ -111,7 +111,7 @@ class StateEnumTests(unittest.TestCase):
         assert_array_equal(indices - offset,
                            [2, 5, 1, 6, 1, 2, 2, 6, 4])
     
-    def testPackUnpackDistribution(self):
+    def test_pack_unpack_distributions(self):
         states = [[0, 0, 1, 1, 2, 7, 2],
                   [0, 1, 0, 1, 1, 0, 2]]
         

@@ -25,8 +25,8 @@ a time-independent approximation of this example was also considered by
 """
 
 import numpy
-from cmepy.new_core.cme_solver_experimental import create_cme_solver
-from cmepy.new_core.recorder import CmeRecorder, display_plots
+import cmepy.solver
+import cmepy.recorder
 
 def create_time_dependencies():
     """
@@ -115,12 +115,17 @@ def main():
     np = (dna_count+1, )*2 + (rna_max+1, m_max+1, d_max+1)
     model['np']= np
     
-    solver = create_cme_solver(model,
-                               sink = True,
-                               time_dependencies = create_time_dependencies())
-    recorder = CmeRecorder(('species',
-                            model['species'],
-                            model['species counts']))
+    solver = cmepy.solver.create(
+        model,
+        sink = True,
+        time_dependencies = create_time_dependencies()
+    )
+    
+    recorder = cmepy.recorder.create(
+        ('species',
+         model['species'],
+         model['species counts'])
+    )
     
     t_final = 0.01 
     time_steps = numpy.linspace(0.0, t_final, 21)
@@ -131,7 +136,7 @@ def main():
         print 'p_sink = %f' % p_sink
         recorder.write(t, p)
     
-    display_plots(recorder, 'species', title = model['doc'])
+    cmepy.recorder.display_plots(recorder, 'species', title = model['doc'])
 
 if __name__ == '__main__':
     main()

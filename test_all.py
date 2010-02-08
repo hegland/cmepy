@@ -10,16 +10,21 @@ ROOT_PACKAGE = 'cmepy'
 
 # package structure, leaves must contain suite() method that returns
 # the test suite for the sub package
-SUB_PACKAGES = {ROOT_PACKAGE : ['core', 'new_core', ],
-                'core' : ['cme_tests', ],
-                'new_core' : ['ode_solver_tests',
-                              'cme_solver_tests',
-                              'recorder_tests',
-                              'domain_tests',
-                              'state_enum_tests',
-                              'lexarrayset_tests',
-                              'statistics_tests',
-                              'measurement_tests', ]}
+SUB_PACKAGES = {
+    ROOT_PACKAGE : [
+        'tests',
+    ],
+    'tests' : [
+        'ode_solver_tests',
+        'solver_tests',
+        'recorder_tests',
+        'domain_tests',
+        'state_enum_tests',
+        'lexarrayset_tests',
+        'statistics_tests',
+        'measurement_tests',
+    ],
+}
 
 
 

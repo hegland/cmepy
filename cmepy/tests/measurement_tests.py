@@ -4,11 +4,11 @@ from test import test_support
 import numpy
 from numpy.testing.utils import assert_almost_equal
 
-from cmepy.new_core.statistics import Distribution
-from cmepy.new_core.measurement import Measurement
+from cmepy.statistics import Distribution
+from cmepy.measurement import Measurement
 
 class MeasurementTests(unittest.TestCase):
-    def testAttributeTrickery(self):
+    def test_attribute_trickery(self):
         m = Measurement()
         m.write(0.0, Distribution({0 : 1.0, 1 : 0.0}))
         m.write(0.5, Distribution({0 : 0.5, 1 : 0.5}))

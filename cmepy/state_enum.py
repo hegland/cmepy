@@ -2,8 +2,8 @@ import itertools
 
 import numpy
 
-import cmepy.new_core.domain as domain
-import cmepy.new_core.lexarrayset as lexarrayset
+import cmepy.domain as domain
+import cmepy.lexarrayset as lexarrayset
 
 
 def create(initial_states):

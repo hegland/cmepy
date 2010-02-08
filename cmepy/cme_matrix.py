@@ -74,15 +74,24 @@ def gen_reaction_matrices(model,
     
     propensities = model['propensities']
     offset_vectors = model['offset_vectors']
+    if len(propensities) != len(offset_vectors):
+        raise ValueError('number of propensities and offset_vectors not equal')
     reactions = itertools.izip(propensities, offset_vectors)
     
     src_states = numpy.array(domain_enum.ordered_states)
     src_indices = domain_enum.indices(src_states)
     
     for (propensity, offset_vector) in reactions:
-        
+        # verify that offset_vector is formatted reasonably
+        offset_vector = numpy.asarray(offset_vector)
+        if len(offset_vector.shape) != 1:
+            lament = 'unable to interpret offset vector \"%s\" as 1D vector'
+            raise TypeError(lament % str(offset_vector))
+        elif offset_vector.shape[0] < 1:
+            lament = 'offset vector \"%s\" does not have positive length'
+            raise ValueError(lament % str(offset_vector))
         # compute destination states for this offset
-        offset_vector = numpy.asarray(offset_vector)[:, numpy.newaxis]
+        offset_vector = offset_vector[:, numpy.newaxis]
         dst_states = src_states + offset_vector
         
         # determine which states have destination states inside the

@@ -4,13 +4,13 @@ from test import test_support
 import numpy
 from numpy.testing.utils import assert_array_equal
 
-import cmepy.new_core.lexarrayset as lexarrayset
+import cmepy.lexarrayset as lexarrayset
 
 def assert_las_equal(las1, las2):
     assert_array_equal(las1.data, las2.data)
 
 class LexArraySetTests(unittest.TestCase):
-    def testEmptyLas(self):
+    def test_empty_las_behaviour(self):
         """
         ensure the empty LexArraySet behaves in some reasonable fashion
         """
@@ -46,7 +46,7 @@ class LexArraySetTests(unittest.TestCase):
         assert_las_equal(split3_intersect, empty)
         assert_las_equal(split3_diff, empty)
         
-    def testNonUniqueArgMember(self):
+    def test_non_unique_arg_member(self):
         """
         test how the non-unique membership operation performs
         """

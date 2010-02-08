@@ -3,8 +3,14 @@ CmeRecorder is a utility class for computation of measurements.
 """
 
 import itertools
-from cmepy.new_core.statistics import Distribution
-from cmepy.new_core.measurement import Measurement
+from cmepy.statistics import Distribution
+from cmepy.measurement import Measurement
+
+def create(*targets):
+    """
+    alias for CmeRecorder.__init__
+    """
+    return CmeRecorder(*targets)
 
 class CmeRecorder(dict):
     """

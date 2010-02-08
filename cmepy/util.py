@@ -7,9 +7,9 @@ import numpy
 
 def indices_ext(shape, slices=None, origin=None):
     """
-    indices_ext(shape [, slices [, origin]]) -> array
+    indices_ext(shape [, slices [, origin]]) -> indices array
     
-    An interface to numpy's mgrid routine, supporting simpler slicing notation
+    An interface to numpy's mgrid routine, supporting simpler slicing notation.
     
     Arguments:
     
@@ -36,7 +36,6 @@ def indices_ext(shape, slices=None, origin=None):
     
     # only shift indices by origin if origin is non-zero
     # this handles both explicit and implicit (None) zero arguments
-    
     zero_origin = (0, )*len(shape)
     if (origin is not None) and (origin != zero_origin):
         assert len(origin) == len(shape)

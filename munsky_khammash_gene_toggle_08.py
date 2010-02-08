@@ -11,9 +11,9 @@ Munsky & Khammash's stochastic version of Gardner's gene toggle model.
 """
 
 import numpy
-import cmepy.new_core.cme_solver as cme_solver
-import cmepy.new_core.recorder as cme_recorder
-import pylab
+from cmepy import domain
+import cmepy.solver
+import cmepy.recorder
 
 def create_model(max_s1_copies, max_s2_copies):
     s1_count = lambda s1, s2 : s1
@@ -42,46 +42,42 @@ def create_model(max_s1_copies, max_s2_copies):
              'norigin' : norigin}
     return model
 
-def display_plots(recorder, title):
-    pylab.figure()
-    for measurement in recorder.measurements('species'):
-        pylab.plot(measurement.times,
-                   measurement.expected_value,
-                   label = measurement.name)
-    pylab.legend()
-    pylab.title(title+': species count expected value')
-    
-    pylab.figure()
-    for measurement in recorder.measurements('species'):
-        pylab.plot(measurement.times,
-                   measurement.standard_deviation,
-                   label = measurement.name)
-    pylab.legend()
-    pylab.title(title+': species count standard deviation')
-
 def main():
 
-    max_s1_copies = 100
+    max_s1_copies = 40
     max_s2_copies = 100
-    
     model = create_model(max_s1_copies, max_s2_copies)
     
-    solver = cme_solver.create_cme_solver(model)
-    recorder = cme_recorder.CmeRecorder(model)
-    recorder.add_target('species',
-                        ['expected value', 'standard deviation'],
-                        model['species'],
-                        model['species counts'])
+    # define domain states as union of two rectangular regions along the axes
+    a_shape = (max_s1_copies, 6)
+    b_shape = (10, max_s2_copies)
+    domain_states_a = set(domain.to_iter(domain.from_rect(a_shape)))
+    domain_states_b = set(domain.to_iter(domain.from_rect(b_shape)))
+    states = domain.from_iter(domain_states_a | domain_states_b)
+    
+    solver = cmepy.solver.create(
+        model,
+        sink = True,
+        domain_states = states
+    )
+    
+    recorder = cmepy.recorder.create(
+        ('species',
+         model['species'],
+         model['species counts'])
+    )
+    
     time_steps = numpy.linspace(0.0, 100.0, 101)
     for t in time_steps:
-        print ('\tt = %g' % t)
         solver.step(t)
-        recorder.write(t, solver.y)
-        bdry_mass = numpy.add.reduce(numpy.abs(numpy.ravel(solver.y[-1, :]))) + numpy.add.reduce(numpy.abs(numpy.ravel(solver.y[:, -1])))
-        print '\tbdry_mass %g' % bdry_mass
+        p, p_sink = solver.y
+        
+        print '\ttime = %g' % t
+        print '\tsink state probability %g' % p_sink
+        
+        recorder.write(t, p)
     
-    display_plots(recorder, model['doc'])
-    pylab.show()
+    cmepy.recorder.display_plots(recorder, 'species', title = model['doc'])
 
 
 if __name__ == '__main__':

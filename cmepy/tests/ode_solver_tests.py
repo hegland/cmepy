@@ -4,11 +4,11 @@ from test import test_support
 import numpy
 import numpy.testing.utils
 
-import cmepy.new_core.ode_solver as ode_solver
+import cmepy.ode_solver as ode_solver
 
 class OdeSolverTests(unittest.TestCase):
     
-    def testInitialise(self):
+    def test_init(self):
         def dy_dt(t, y):
             return 0.0
         
@@ -16,7 +16,7 @@ class OdeSolverTests(unittest.TestCase):
         assert solver is not None
         assert solver.dy_dt == dy_dt
 
-    def testInitialiseSetInitialValuesPreventExternalModification(self):
+    def test_init_set_inital_values_read_only(self):
         def dy_dt(t, y):
             return 0.0
         
@@ -41,7 +41,7 @@ class OdeSolverTests(unittest.TestCase):
         self.assertRaises(AttributeError, externally_modify_solver_t)
         self.assertRaises(AttributeError, externally_modify_solver_y)
     
-    def testSolveScalarProblem1(self):
+    def test_solve_scalar_problem_1(self):
         def dy_dt(t, y):
             return 0.0
         
@@ -55,7 +55,7 @@ class OdeSolverTests(unittest.TestCase):
             assert solver.y == y_0
             assert solver.t == t
     
-    def testSolveScalarProblem2(self):
+    def test_solve_scalar_problem_2(self):
         def dy_dt(t, y):
             return 1.0
         
@@ -70,7 +70,7 @@ class OdeSolverTests(unittest.TestCase):
             numpy.testing.utils.assert_almost_equal(solver.y, y_0+t)
             assert solver.t == t
     
-    def testPreventSolverSolutionCorruption(self):
+    def test_prevent_write_to_y(self):
         def dy_dt(t, y):
             return numpy.ones(numpy.shape(y))
         
@@ -90,7 +90,7 @@ class OdeSolverTests(unittest.TestCase):
             numpy.testing.utils.assert_almost_equal(y_current_2, y_0+t)
             assert y_current_1 is not y_current_2
     
-    def testPreventSolverBackwardsSteps(self):
+    def test_prevent_backwards_steps(self):
         def dy_dt(t, y):
             return numpy.ones(numpy.shape(y))
         
@@ -108,7 +108,7 @@ class OdeSolverTests(unittest.TestCase):
                 assert solver.t == t
                 numpy.testing.utils.assert_almost_equal(solver.y, y_0+(t-t_0))
     
-    def testSolveWrappedProblem(self):
+    def test_solve_wrapped_problem(self):
         
         shape = (10, 10)
         

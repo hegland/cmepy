@@ -7,8 +7,8 @@ System :
 """
 
 import numpy
-from cmepy.new_core import cme_solver_experimental
-from cmepy.new_core import domain
+import cmepy.solver
+from cmepy import domain
 
 def gen_states(initial_copies):
     """
@@ -111,7 +111,7 @@ def main():
     model = create_model(initial_copies)
     states = domain.from_iter(gen_states(initial_copies))
     
-    solver = cme_solver_experimental.create_cme_solver(
+    solver = cmepy.solver.create(
         model,
         sink = True,
         domain_states = states,
