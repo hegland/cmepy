@@ -31,7 +31,8 @@ def non_neg(x):
 
 def create_time_dependencies():
     """
-    returns time dependencies as dict, compatiable with fsp solver
+    returns time dependencies as dictionary of functions keyed
+    by sets of reaction indices (for the fsp solver ...)
     """  
     
     avogadro_number = 6.0221415e23
