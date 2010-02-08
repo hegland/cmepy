@@ -1,11 +1,12 @@
 import unittest
+from test import test_support
 
 import itertools
 
 import numpy
 from numpy.testing.utils import assert_array_equal
 
-import domain
+import cmepy.new_core.domain as domain
 
 
 class DomainTests(unittest.TestCase):
@@ -78,5 +79,12 @@ class DomainTests(unittest.TestCase):
             assert_array_equal(states[:, i], goal_state)
             assert p_0[goal_state] == values[i]
     
+def suite():
+    suite = unittest.TestLoader().loadTestsFromTestCase(DomainTests)
+    return suite
+
+def main():
+    test_support.run_unittest(DomainTests)
+
 if __name__ == '__main__':
-    unittest.main()
+    main()

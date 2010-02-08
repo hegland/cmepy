@@ -57,3 +57,4 @@ def to_iter(state_array):
     """
     for state in state_array.transpose():
         yield tuple(state)
+    return

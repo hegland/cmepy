@@ -60,7 +60,7 @@ def gen_reaction_matrices(model,
     offset_vectors = model['offset_vectors']
     reactions = itertools.izip(propensities, offset_vectors)
     
-    src_states = numpy.array(domain_enum.sorted_states)
+    src_states = numpy.array(domain_enum.ordered_states)
     src_indices = domain_enum.indices(src_states)
     
     for (propensity, offset_vector) in reactions:
@@ -91,9 +91,10 @@ def gen_reaction_matrices(model,
         # interior states of the truncated domain
         
         if num_int_states > 0:
-            int_src_indices = numpy.array(src_indices[interior])
             int_src_states = numpy.array(src_states[:, interior])
-            int_dst_indices = domain_enum.indices(int_src_states)
+            int_src_indices = numpy.array(src_indices[interior])
+            int_dst_states = numpy.array(dst_states[:, interior])
+            int_dst_indices = domain_enum.indices(int_dst_states)
             int_coefficients = propensity(*int_src_states)
             
             # flux out
@@ -111,6 +112,7 @@ def gen_reaction_matrices(model,
         if sink and (num_ext_states > 0):
             valid = validity_test(dst_states[:, exterior])
             num_valid_states = numpy.add.reduce(valid)
+            
             if num_valid_states > 0:
                 ext_src_indices = numpy.array(src_indices[exterior][valid])
                 ext_src_states = numpy.array(src_states[:, exterior][:, valid])
@@ -135,11 +137,11 @@ def gen_reaction_matrices(model,
         matrix_size = domain_enum.size
         if sink:
             matrix_size += 1
-        
         matrix_shape = (matrix_size, )*2
-        if len(data)==0:
+                
+        if len(data) == 0:
             reaction_matrix = scipy.sparse.csr_matrix(matrix_shape)
-        else:            
+        else:
             # merge data, rows, cols
             data = numpy.concatenate(data)
             cols = numpy.concatenate(cols)
@@ -181,6 +183,8 @@ def create_diff_eqs(reaction_matrices, phi = None):
     if matrix_shape[0] != matrix_shape[1]:
         raise ValueError('reaction matrices must be square')
     
+    zero_matrix = scipy.sparse.csr_matrix(matrix_shape)
+    
     if phi is None:
         phi = {}
     for reaction_subset in phi:
@@ -194,7 +198,8 @@ def create_diff_eqs(reaction_matrices, phi = None):
         """
         sum_reation_matrices(reaction_indices) -> sum_matrix
         """
-        sum_matrix = sum(reaction_matrices[i] for i in reaction_indices)
+        sum_matrix = sum((reaction_matrices[i] for i in reaction_indices),
+                         zero_matrix)
         optimise_csr_matrix(sum_matrix)
         return sum_matrix
     
@@ -211,6 +216,11 @@ def create_diff_eqs(reaction_matrices, phi = None):
         """
         returns dp / dt for given t and p
         """
-        return sum(phi[s](t)*term[s]*p if s in phi else term[s]*p for s in term)
+        
+        # subtlety : there are two types of multiplication operators below
+        # (one is csr_matrix * vector, and the other is vector * scalar)
+        # csr_matrix * scalar multiplication is not implemented so these
+        # operations are non-commutative!
+        return sum(term[s]*p*phi[s](t) if s in phi else term[s]*p for s in term)
         
     return diff_eqs

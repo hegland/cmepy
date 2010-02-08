@@ -34,8 +34,12 @@ def indices_ext(shape, slices=None, origin=None):
     slices_concrete = [slice(*sl.indices(n)) for (sl, n) in slices_and_dims]
     indices = numpy.mgrid[slices_concrete]
     
-    if origin is not None:
-        assert(len(origin)==len(shape))
+    # only shift indices by origin if origin is non-zero
+    # this handles both explicit and implicit (None) zero arguments
+    
+    zero_origin = (0, )*len(shape)
+    if (origin is not None) and (origin != zero_origin):
+        assert len(origin) == len(shape)
         # offset indices by origin
         origin_slice = (slice(None), ) + (numpy.newaxis, )*len(origin)
         indices += numpy.asarray(origin)[origin_slice]

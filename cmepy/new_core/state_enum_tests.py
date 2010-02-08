@@ -1,9 +1,10 @@
 import unittest
+from test import test_support
 
 import numpy
 from numpy.testing.utils import assert_array_equal
 
-import state_enum
+import cmepy.new_core.state_enum as state_enum
 
 class StateEnumTests(unittest.TestCase):
         
@@ -135,5 +136,12 @@ class StateEnumTests(unittest.TestCase):
             assert p_sparse[state] == q_sparse[state]
     
 
+def suite():
+    suite = unittest.TestLoader().loadTestsFromTestCase(StateEnumTests)
+    return suite
+
+def main():
+    test_support.run_unittest(StateEnumTests)
+
 if __name__ == '__main__':
-    unittest.main()
+    main()
