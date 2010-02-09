@@ -4,7 +4,6 @@ Some models adapted from the Discrete Stochastic Models Test Suite.
 See http://code.google.com/p/dsmts/
 """
 
-from cmepy.util import non_neg
 from cmepy import model
 
 DSMTS_001_01 = model.create(

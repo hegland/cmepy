@@ -1,8 +1,12 @@
+"""
+unit tests for cmepy.models sub-package
+"""
+
 import unittest
 from test import test_support
 
 
-# models will automatically validate once instantiated,
+# models will automatically validated once instantiated,
 # so it should be sufficient to instantiate them for testing
 # purposes
 
@@ -10,7 +14,13 @@ class ModelTests(unittest.TestCase):
     def test_burr08_models(self):
         from cmepy.models import burr08
         m = burr08.create_model_competing_clonotypes()
-
+    
+    def test_catalytic_reaction_models(self):
+        from cmepy.models import catalytic_reaction
+        initial_counts = { 'A' : 20, 'D' : 15 }
+        m = catalytic_reaction.create_model(**initial_counts)
+        states = set(catalytic_reaction.gen_states(**initial_counts))
+        
     def test_dsmts_models(self):
         from cmepy.models import dsmts
         m = dsmts.DSMTS_001_01

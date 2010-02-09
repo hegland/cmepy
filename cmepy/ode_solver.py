@@ -13,7 +13,8 @@ class Solver(object):
             ode_config_callback(ode_instance)
         
         where ode_instance is the scipy.integrate.ode object managed
-        internally by the solver.
+        internally by the solver. If specified, the callback is called
+        by the Solver just after ode_instance is instantiated.
         """
         self._dy_dt = dy_dt
         self._ode = None

@@ -49,6 +49,7 @@ def create_packing_functions(domain_enum):
 def create(model,
            sink,
            p_0=None,
+           t_0=None,
            time_dependencies=None,
            domain_states=None):
     """
@@ -73,20 +74,39 @@ def create(model,
             defaults to all probability concentrated at the initial state,
             otherwise, a ValueError will be raised.
         
-        time_dependencies : (optional) mapping of time dependent coefficient
+        t_0 : (optional) initial time, defaults to 0.0
+        
+        time_dependencies : (optional) By default, reaction propensities are
+            time independent. If specified, time_dependencies must be of the
+            form { s_1 : phi_1, ..., s_n : phi_n }, where each (s_j, phi_j)
+            item satisifes :
+            
+                s_j : set of reaction indices
+                phi_j : phi_j(t) -> time dependent coefficient 
+            
+            The propensities of the reactions with indicies contained in s_j
+            will all be multiplied by the coefficient phi_j(t), at time t.
+            Reactions are indexed according to the ordering of the propensities
+            in the model.
+            
+            The reaction index sets s_j must be *disjoint*. It is not necessary
+            for the union of the s_j to include all the reaction indices.
+            If a reaction's index is not contained in any s_j then the reaction
+            is treated as time-independent. 
+        
+        mapping of time dependent coefficient
             functions keyed by subsets of reaction indices, with respect to the
             ordering of reactions determined by the order of the propensity
             functions inside the model. The propensities of the reactions
-            with indices included in the subset are multiplied by the time
-            dependent coefficient functions. By default, no time dependent
+            with indices included in each subset are multiplied by the time
+            dependent coefficient function. By default, no time dependent
             coefficient functions are specified, that is, the CME has
             time-independent propensities.
         
         domain_states : (optional) array of states in the domain.
-            By default, attempt to infer the domain states assuming a
-            rectangular domain defined by the 'shape' entry of the model, and
-            optionally also the 'initial_state' entry. A ValueError is raised
-            if both domain_states and model['shape'] are unspecified.
+            By default, generate the rectangular lattice of states defined by
+            the 'shape' entry of the model. A ValueError is raised if both
+            domain_states and 'shape' are unspecified.
     """
     
     mdl.validate_model(model)
@@ -113,6 +133,9 @@ def create(model,
         else:
             p_0 = {initial_state : 1.0}
     
+    if t_0 is None:
+        t_0 = 0.0
+    
     member_flags = domain_enum.contains(domain.from_iter(p_0))
     if not numpy.logical_and.reduce(member_flags):
         raise ValueError('support of p_0 is not a subset of domain_states')
@@ -129,12 +152,12 @@ def create(model,
     # construct and initialise solver
     if sink:
         sink_p_0 = 0.0
-        cme_solver = ode_solver.Solver(dy_dt, y_0 = (p_0, sink_p_0))
+        cme_solver = ode_solver.Solver(dy_dt, y_0 = (p_0, sink_p_0), t_0 = t_0)
         pack, unpack = create_packing_functions(domain_enum)
         cme_solver.set_packing(pack, unpack, transform_dy_dt = False)
     else:
         pack = domain_enum.pack_distribution
         unpack = domain_enum.unpack_distribution
-        cme_solver = ode_solver.Solver(dy_dt, y_0 = p_0)
+        cme_solver = ode_solver.Solver(dy_dt, y_0 = p_0, t_0 = t_0)
         cme_solver.set_packing(pack, unpack, transform_dy_dt = False)
     return cme_solver

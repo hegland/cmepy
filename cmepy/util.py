@@ -5,6 +5,22 @@ A few utility routines. 27/5/09. R. Fletcher-Costin, ANU
 import itertools
 import numpy
 
+def consecutive_pairs(p):
+    """
+    consecutive_pairs(p) -> (p0, p1), (p1, p2), ...
+    
+    where p is an iterator
+    """
+    iter = p.__iter__()
+    try:
+        previous = iter.next()
+        while True:
+            current = iter.next()
+            yield (previous, current)
+            previous = current
+    except StopIteration:
+        return
+    
 def non_neg(x):
     """
     non_neg(x) -> max(x, 0) [array operation]
