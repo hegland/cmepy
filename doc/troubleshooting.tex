@@ -1,0 +1,103 @@
+\section{Troubleshooting}
+
+\subsection{Propensity functions not defined for vector arguments}
+
+Each propensity function defined in the \mono{'propensities'} entry
+of a model definition must handle the case where the reaction count
+arguments are not integers, but \numpy{} arrays of integers.
+Consider the following incorrectly-defined model shown in
+\lstref{brokenModel}:
+\begin{lstlisting}[frame=tb,
+caption={A broken model},
+label=brokenModel]
+model = {'doc' : 'a broken model, unable to handle vector arguments',
+         'np' : (10, ),
+         'propensities' : (lambda *x : max(x[0], 0.0),)
+         }
+\end{lstlisting}
+Attempting to solve this model using a \mono{CmeSolver} instance will raise a
+rather cryptic exception during the call to \mono{solve}:
+\begin{verbatim}
+Traceback (most recent call last):
+
+[ some output omitted here . . . ]
+
+  File "solver_failure_example.py", line 12, in <lambda>
+    'propensities' : (lambda *x : max(x[0], 0.0),)
+ValueError: The truth value of an array with more than one element
+is ambiguous. Use a.any() or a.all()
+\end{verbatim}
+This error is due to the use of \python{}'s built-in \mono{max} function,
+which is unable to perform a vectorised element-wise maximum operation when one
+of the arguments, in this case \mono{x[0]}, is a \numpy{} array. The
+correct solution is to replace the use of \mono{max} in the definition of the
+propensity function with a call to \mono{numpy.maximum}, which performs a
+vectorised maximum operation if passed array arguments, and reduces to the
+usual scalar max behaviour otherwise. A corrected model is show below in
+\lstref{correctedModel}:
+\begin{lstlisting}[frame=tb,
+caption={A corrected model},
+label=correctedModel]
+import numpy
+model = {'doc' : 'corrected model',
+         'np' : (10, ),
+         'propensities' : (lambda *x : numpy.maximum(x[0], 0.0),)
+         }
+\end{lstlisting}
+
+
+\subsection{Integration failure due to large time steps}
+Symptom: a \mono{CmeSolver} instance raises a RuntimeError during a call to
+\mono{step}, with similar output to the following:
+\begin{verbatim}
+ DVODE--  At current T (=R1), MXSTEP (=I1) steps   
+       taken on this call before reaching TOUT     
+      In above message,  I1 =       500
+      In above message,  R1 =  0.5801764171096D+00
+vode: Excess work done on this call. (Perhaps wrong MF.)
+Traceback (most recent call last):
+
+[ some output omitted here . . . ]
+
+RuntimeError: CME integration failure (look for messages from DVODE / vode)
+\end{verbatim}
+Possible Solution: attempt reducing the size of the time steps. For very stiff
+models, this might involve using very small time steps.
+
+\subsection{Integration failure due to singular propensity functions}
+Symptom: a \mono{CmeSolver} instance raises a RuntimeError during a call to
+\mono{step}, with similar output to the following:
+\begin{verbatim}
+ DVODE--  At T (=R1) and step size H (=R2), the    
+       corrector convergence failed repeatedly     
+       or with abs(H) = HMIN   
+      In above,  R1 =  0.0000000000000D+00   R2 =  0.9965007081277D-17
+vode: Repeated convergence failures. (Perhaps bad Jacobian supplied or wrong
+choice of MF or tolerances.)
+Traceback (most recent call last):
+
+[ some output omitted here . . . ]
+
+RuntimeError: CME integration failure (look for messages from DVODE / vode)
+\end{verbatim}
+Possible Solution: replace singular propensity functions with non-singular ones!
+
+\subsection{State space is too large}
+
+Interesting things can occur if the size of a model's state space,
+\mono{model['np']}, is too large. One of the following errors may be raised:
+
+\begin{verbatim}
+ValueError: dimensions too large.
+
+MemoryError
+
+ValueError: negative dimensions are not allowed
+\end{verbatim}
+This last error is likely due to integer overflow while attempting to compute
+the number of states in the state space.
+
+Finally, if the size of the state space causes the machine to run out of
+memory during a call to \scipy{}'s underlying `vode' ode integrator
+implementation, this may cause a segmentation fault, which can be difficult to
+diagnose, as it will not raise an exception in \python{}.

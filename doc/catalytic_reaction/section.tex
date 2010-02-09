@@ -1,0 +1,109 @@
+\section{Tutorial: Catalytic Reaction}
+\subsection{Introducing a Catalytic Reaction example}
+Consider the following example of a `catalytic reaction' system, modified
+slightly from~\cite{mastny2007two}:
+\begin{align*}
+% --- reaction 1
+\species{A} \xrightarrow{k_1} \species{B} \xrightarrow{k_2} \species{C} \\
+% --- reaction 3
+\species{B} + \species{D} \xrightarrow{k_3} \species{B} + \species{E}
+\end{align*}
+The rate constants are $k_1 = 1, k_2 = 1000$ and $k_3 = 100$, while the initial
+copy counts are $15$ copies of the species $\species{A}$, $20$ copies of
+$\species{D}$, and $0$ copies of both $\species{B}$ and $\species{C}$.
+
+\subsection{Solving the CME for the Catalytic Reaction with \cmepy{}}
+Suppose we wish to solve the Chemical Master Equation for this catalytic
+reaction model, and determine the expected copy count of the species
+$\species{E}$ at the time $t = 0.5$. Using \cmepy{}, an \emph{almost} complete
+script to perform this task is the following:
+\lstinputlisting[frame=tb]{catalytic_reaction/snippet_4.py}
+\begin{enumerate}
+  \item The model \mono{m},
+  as returned by the \mono{create\_catalytic\_model()}
+  function,
+  defines the system of reactions for this `catalytic
+  reaction' example. We will define this function during the next section.
+  \item The \mono{solver} object:
+  \begin{itemize}
+    \item is initialised via \mono{cmepy.solver.create}, passing the model
+    \mono{m} as an argument.
+    Setting the flag \mono{sink} to \mono{False} indicates
+    that the state space of the model is complete -- no
+	states are missing -- so a `sink' state to track lost probability is
+	unnecessary;
+	\item can be advanced to the time \mono{t} by \mono{solver.step(t)};
+	\item computes \mono{solver.y}, the solution to the Chemical Master Equation
+	for the given model.
+  \end{itemize}
+  \item The \mono{recorder} object is used to store the solutions produced by
+  the \mono{solver} object, and then compute derived statistics:
+  \begin{itemize}
+    \item the \mono{recorder} is initialised with information about the species
+    involved in the catalytic reaction contained in the model \mono{m};
+    \item the solution \mono{solver.y} of the Chemical Master Equation is
+    stored inside the \mono{recorder} via \mono{recorder.write(t, solver.y)}
+    after each time step;
+    \item when all the time steps are complete, the most recently
+    recordeed expected value of the copy count of the species $\species{E}$ is
+    computed via \mono{recorder['E'].expected\_value[-1]}.
+  \end{itemize}
+\end{enumerate}
+\subsection{Defining the Catalytic Reaction model}
+\subsubsection{Defining the state space initial state and shape}
+We shall use a reaction count state space for this model. We represent states as
+triples of non-negative integers, and shall use the variable \mono{x} to
+denote an arbitrary state. Let \mono{x[0]}, \mono{x[1]} and \mono{x[2]} denote
+the counts of the first, second, and third reactions, respectively.
+
+We define the initial state and the shape of the state space:
+\lstinputlisting[frame=tb]{catalytic_reaction/snippet_0.py}
+Observe how we have defined the initial state of the system as \mono{(0, )*3},
+that is, \mono{(0, 0, 0)}, where the count of all three reactions is zero.
+The shape of the state space is defined as \mono{shape}, with the value
+\mono{(a\_initial + 1, )*2 + (d\_initial + 1, )}. This specifies that the first
+two reaction counts range over 0, 1, \ldots, \mono{a\_initial}, while the third
+reaction count ranges over 0, 1, \ldots, \mono{d\_initial}.
+
+By default, the state space $\Omega \subset \mathbf{N}^d$ is defined from the
+$\mono{shape}$ variable $(s_0, \ldots, s_{d-1}) \in \mathbf{N}^d$ to be a dense
+`rectangular' lattice of integer points, that is,
+\begin{equation*}
+\Omega = \left\{ (x_0, \ldots, x_{d-1}) : 
+\textrm{$x_i \in \mathbf{N}, 0 \leq x_i < s_i$ for all $i = 0, \ldots, d-1$}
+\right\} \; .
+\end{equation*}
+In our case, this means that the state space will contain
+$(\mono{a\_initial} + 1)^2 (\mono{d\_initial} + 1) = 16^2 \cdot 21$ distinct
+states. This state space is actually quite wasteful, as states with $x_1 >
+x_0$ are not reachable using this catalytic reaction model. XXX TODO more on
+that later
+
+\subsubsection{Defining the species counts and names}
+We must define the species count functions. The $i$-th
+species count function maps a reaction count state \mono{x} to the copy count of
+the $i$-th species.
+We define functions \mono{s\_1}, \ldots, \mono{s\_5} to give the copy counts of
+the species $\species{A}$, \ldots, $\species{E}$ as follows:
+\lstinputlisting[frame=tb]{catalytic_reaction/snippet_1.py}
+Note how we have placed the species count functions inside the tuple
+\mono{species\_counts}, and defined a second tuple, \mono{species}, containing
+the corresponding species names.
+
+\subsubsection{Defining the reaction propensities, transitions, and names}
+We define each reaction in the system by providing a name, a propensity
+function, and a state transition:
+\lstinputlisting[frame=tb]{catalytic_reaction/snippet_2.py}
+For example, these definitions specify that the third reaction has the name
+\mono{'B+D->B+E'}, occurs with a propensity equal to 100 times the product of
+the species counts of the second ($\species{B}$) and fourth
+($\species{D}$) species for the current state \mono{x}, and corresponds
+to a transition from the state $(\mono{x[0]}, \mono{x[1]}, \mono{x[2]})$ to the
+state $(\mono{x[0]}, \mono{x[1]}, \mono{x[2]} + 1)$.
+
+\subsubsection{The complete model definition}
+We may combine the above definitions into one
+complete model definition for this catalytic reactione example, use it to fill
+out the body of the function \mono{create\_catalytic\_model()} from the initial
+script:
+\lstinputlisting[frame=tb]{catalytic_reaction/snippet_3.py}

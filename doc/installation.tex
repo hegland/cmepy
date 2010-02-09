@@ -1,0 +1,30 @@
+\section{Installation}
+
+\subsection{Dependencies}
+\cmepy{} was developed with \python{} 2.5.2, \scipy{} 0.7.0, \& \numpy{} 1.2.1 .
+In addition, \matplotlib{} is used to display graphical output in some
+examples, but is not otherwise a dependency.
+
+\subsection{Testing \& Installation}
+
+Once \cmepy{} has been obtained, the package can be tested and installed
+by running the \mono{setup.py} script via \python{} as follows:
+
+\mono{python setup.py test}
+
+\mono{python setup.py install}
+
+\subsubsection{Local package installation (Linux)}
+If it is not possible to install \cmepy{} to the \python{}'s global
+\mono{site-packages} directory, \cmepy{} may be installed locally to a user's
+\mono{\$\{HOME\}} directory. First, ensure the path
+\mono{\$\{HOME\}/lib/python} exists,
+and that the \mono{\$\{PYTHONPATH\}}
+environment variable includes
+\mono{\$\{HOME\}/lib/python}. Then, \cmepy{} may be installed locally via
+
+\mono{python setup.py install --home=\$\{HOME\}}
+
+A (possibly better) alternative to this method of local installation is to
+use the \mono{virtualenv} package to establish isolated (local)
+\python{} environments. See \url{http://pypi.python.org/pypi/virtualenv}.
