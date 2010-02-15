@@ -44,7 +44,7 @@ def gather_suites(sub_packages, root_package):
     """
     gather_suites(sub_packages, root_package) -> set of unittest.TestSuite
     """
-    test_suites = set()
+    test_suites = list()
     
     def dfs_add_tests(chain):
         """
@@ -60,7 +60,7 @@ def gather_suites(sub_packages, root_package):
             print '\t+ %s' % str(sub_package)
             try:
                 suite = sub_package.suite()
-                test_suites.add(suite)
+                test_suites.append(suite)
             except AttributeError:
                 detail = 'sub package \'%s\' has no \'suite()\' method' % head
                 print '\t  -- WARNING : %s, ignoring' % detail

@@ -175,7 +175,8 @@ def main():
     for time, marginal in zip(measurement.times, measurement.distributions):
         pylab.plot(
             marginal.to_dense(marginal_shape),
-            label = 't = %.2f' % time)
+            label = 't = %.2f' % time
+        )
     pylab.legend()
     pylab.title('probability distribution of E')
     pylab.ylabel('P(E)')

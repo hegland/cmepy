@@ -141,23 +141,43 @@ def create(model,
         raise ValueError('support of p_0 is not a subset of domain_states')
     
     # compute reaction matrices and use them to define differential equations
-    gen_matrices = cme_matrix.gen_reaction_matrices(model,
-                                                    domain_enum,
-                                                    sink,
-                                                    cme_matrix.non_neg_states)
+    gen_matrices = cme_matrix.gen_reaction_matrices(
+        model,
+        domain_enum,
+        sink,
+        cme_matrix.non_neg_states
+    )
     reaction_matrices = list(gen_matrices)
-    dy_dt = cme_matrix.create_diff_eqs(reaction_matrices,
-                                       phi = time_dependencies)
+    dy_dt = cme_matrix.create_diff_eqs(
+        reaction_matrices,
+        phi = time_dependencies
+    )
     
     # construct and initialise solver
     if sink:
         sink_p_0 = 0.0
-        cme_solver = ode_solver.Solver(dy_dt, y_0 = (p_0, sink_p_0), t_0 = t_0)
+        cme_solver = ode_solver.Solver(
+            dy_dt,
+            y_0 = (p_0, sink_p_0),
+            t_0 = t_0
+        )
         pack, unpack = create_packing_functions(domain_enum)
-        cme_solver.set_packing(pack, unpack, transform_dy_dt = False)
+        cme_solver.set_packing(
+            pack,
+            unpack,
+            transform_dy_dt = False
+        )
     else:
         pack = domain_enum.pack_distribution
         unpack = domain_enum.unpack_distribution
-        cme_solver = ode_solver.Solver(dy_dt, y_0 = p_0, t_0 = t_0)
-        cme_solver.set_packing(pack, unpack, transform_dy_dt = False)
+        cme_solver = ode_solver.Solver(
+            dy_dt,
+            y_0 = p_0,
+            t_0 = t_0
+        )
+        cme_solver.set_packing(
+            pack,
+            unpack,
+            transform_dy_dt = False
+        )
     return cme_solver
