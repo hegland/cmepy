@@ -72,7 +72,7 @@ def gather_suites(sub_packages, root_package):
     
     return test_suites
 
-def additional_tests(sub_packages, root_package):
+def additional_tests():
     """
     additional_tests() -> unittest.TestSuite
     """
@@ -80,7 +80,7 @@ def additional_tests(sub_packages, root_package):
     print ''
     print '-- gathering test suites :'
     print ''
-    test_suite = gather_suites(sub_packages, root_package)
+    test_suite = gather_suites(SUB_PACKAGES, ROOT_PACKAGE)
     print ''
     print '-- running test suites :'
     print ''
@@ -92,7 +92,7 @@ def main():
     """
     gathers and runs all the tests
     """
-    suite = additional_tests(SUB_PACKAGES, ROOT_PACKAGE)
+    suite = additional_tests()
     unittest.TextTestRunner(verbosity=2).run(suite)
     
 if __name__ == '__main__':

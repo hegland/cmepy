@@ -1,6 +1,5 @@
 CmePy v2.0
 ==========
-
 a Chemical Master Equation solver
 ---------------------------------
 
