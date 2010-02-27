@@ -25,8 +25,6 @@ a time-independent approximation of this example was also considered by
 """
 
 import numpy
-import cmepy.solver
-import cmepy.recorder
 import cmepy.model
 from cmepy.util import non_neg
 
@@ -129,6 +127,13 @@ def create_model(dna_count=2, rna_max=15, m_max=15, d_max=15):
     )
 
 def main():
+    """
+    solves transcription regulation model and plot results
+    """
+    
+    import cmepy.solver
+    import cmepy.recorder
+    
     m = create_model()
     
     solver = cmepy.solver.create(
@@ -138,8 +143,7 @@ def main():
     )
     
     recorder = cmepy.recorder.create(
-        ('species',
-         m.species,
+        (m.species,
          m.species_counts)
     )
     
@@ -152,10 +156,5 @@ def main():
         recorder.write(t, p)
     
     cmepy.recorder.display_plots(
-        recorder,
-        'species',
-        title = m.name
+        recorder
     )
-
-if __name__ == '__main__':
-    main()

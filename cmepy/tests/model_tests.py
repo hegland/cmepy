@@ -13,7 +13,8 @@ from test import test_support
 class ModelTests(unittest.TestCase):
     def test_burr08_models(self):
         from cmepy.models import burr08
-        m = burr08.create_model_competing_clonotypes()
+        m = burr08.create_model()
+        phi = burr08.create_time_dependencies()
     
     def test_catalytic_reaction_models(self):
         from cmepy.models import catalytic_reaction
@@ -53,6 +54,11 @@ class ModelTests(unittest.TestCase):
         from cmepy.models import pap_pili
         m = pap_pili.create_model()
         states = set(pap_pili.gen_states())
+    
+    def test_transcription_regulation_models(self):
+        from cmepy.models import transcription_regulation
+        m = transcription_regulation.create_model()
+        phi = transcription_regulation.create_time_dependencies()
 
 def suite():
     suite = unittest.TestLoader().loadTestsFromTestCase(ModelTests)

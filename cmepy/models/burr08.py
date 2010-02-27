@@ -6,7 +6,7 @@ import math
 import numpy
 from cmepy import model
 
-def create_model_competing_clonotypes():
+def create_model():
     """
     create species count state space version of the competing clonotypes model
     """
@@ -79,10 +79,55 @@ def create_model_competing_clonotypes():
         initial_state = (10, 10)
     )
 
-def create_time_deps_competing_clonotypes():
+def create_time_dependencies():
     """
     create time dependencies for the competing clonotypes model
     """
     # 0-th and 2-nd reactions are scaled by the following
     # time dependent factor
     return {frozenset([0, 2]) : lambda t : math.exp(-0.1*t)}
+
+def main():
+    """
+    Solves the competing clonotypes model and plots results
+    """
+    
+    import pylab
+    
+    from cmepy import solver, recorder
+    
+    m = create_model()
+    
+    s = solver.create(
+        model = m,
+        sink = True,
+        time_dependencies = create_time_dependencies()
+    )
+    
+    r = recorder.create(
+        (m.species, m.species_counts)
+    )
+    
+    t_final = 15.0
+    steps_per_time = 1
+    time_steps = numpy.linspace(0.0, t_final, int(steps_per_time*t_final) + 1)
+    
+    for t in time_steps:
+        s.step(t)
+        p, p_sink = s.y
+        print 't : %.2f, truncation error : %.2g' % (t, p_sink)
+        r.write(t, p)
+    
+    # display a series of contour plots of P(A, B; t) for varying t
+    
+    measurement = r[('A', 'B')]
+    epsilon = 1.0e-5
+    for t, marginal in zip(measurement.times, measurement.distributions):
+        pylab.figure()
+        pylab.contourf(
+            marginal.compress(epsilon).to_dense(m.shape)
+        )
+        pylab.title('P(A, B; t = %.f)' % t)
+        pylab.ylabel('species A count')
+        pylab.xlabel('species B count')
+    pylab.show()

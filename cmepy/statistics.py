@@ -123,6 +123,19 @@ class Distribution(dict):
             shifted_state = tuple(numpy.asarray(state) - numpy.asarray(origin))
             p_dense[shifted_state] += probability
         return p_dense
+    
+    def compress(self, epsilon):
+        """
+        d.compress(epsilon) -> compressed epsilon-approximation of d
+        
+        Returns compressed version of distribution.
+        
+        The returned approximation is *compressed*, in the sense that it is the
+        approximation with the smallest support, while the error between d and
+        the approximation is within epsilon (L1 norm).
+        """
+        
+        return Distribution(compress(self, epsilon))
 
 def map_distribution_simple(f, p, g=None):
     """
@@ -267,3 +280,42 @@ def covariance(p):
     p : states -> probabilities.
     """
     return _metavariance(p, exponent=1)
+
+def compress(p, epsilon):
+    """
+    compress(p, epsilon) -> compressed epsilon-approximation of p
+    
+    Returns an approximation of the mapping p, treating p as a distribution
+    p : states -> probabilities. The returned approximation is *compressed*,
+    in the sense that it is the approximation with the smallest support, while
+    the error between p and the approximation is within epsilon (L1 norm).
+    """
+    
+    if not (0.0 <= epsilon <= 1.0):
+        raise ValueError('epsilon must be within range: 0.0 <= epsilon <= 1.0')
+    
+    p_compressed = {}
+    
+    if len(p) > 0:
+        # create array representation of distribution
+        states, probabilities = domain.from_mapping(p)
+        
+        # order entries with respect to increasing probability
+        order = numpy.argsort(probabilities)
+        states = states.transpose()[order]
+        probabilities = probabilities[order]
+        
+        # discard the largest number of states while keeping the
+        # corresponding net probability discarded below epsilon
+        cumulative_probability = numpy.add.accumulate(probabilities)
+        approximation = (cumulative_probability >= epsilon)
+        states = states[approximation]
+        probabilities = probabilities[approximation]
+        
+        assert len(states) == len(probabilities)
+        
+        # convert approximation back to a sparse dictionary format
+        for state, probability in itertools.izip(states, probabilities):
+            p_compressed[tuple(state)] = probability
+        
+    return p_compressed
