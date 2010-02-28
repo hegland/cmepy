@@ -32,10 +32,13 @@ check out a copy of the latest version of CmePy from GitHub, via::
 
 Testing and Installation
 ~~~~~~~~~~~~~~~~~~~~~~~~
-Once CmePy has been obtained, the package can be tested and installed
-by running the **setup.py** script via Python_ as follows::
+Once CmePy has been obtained, the package can be tested by running the
+**test_all.py** script via Python_ as follows::
 
-    python setup.py test
+    python test_all.py
+
+CmePy may then be installed via the **setup.py**::
+
     python setup.py install
 
 Documentation

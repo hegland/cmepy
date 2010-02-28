@@ -21,8 +21,6 @@ setup(
     
     package_data = {'':['*.txt']},
 
-    packages = find_packages(),
-
-    test_suite = 'test_all.additional_tests'
+    packages = find_packages()
 )
 
