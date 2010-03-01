@@ -9,7 +9,7 @@ from cmepy import model as mdl
 
 def compute_propensity(prop, states):
     """
-    compute_propensity(prop, states) -> propensity evaluated over states
+    Returns the propensity ``prop`` evaluated over ``states``.
     """
     
     num_states = numpy.shape(states)[1]
@@ -24,10 +24,8 @@ def compute_propensity(prop, states):
         raise ValueError(lament % (str(prop), str(numpy.shape(nu))))
 
 def optimise_csr_matrix(csr_matrix):
-    """
-    optimise_csr_matrix(csr_matrix) -> csr_matrix
-    
-    Performs *in place* operations to optimise the sparse csr matrix data.
+    """    
+    Performs **in place** operations to optimise csr matrix data. Returns None.
     """
     # xxx todo profile performance using permutations / subsets of these
     csr_matrix.sum_duplicates()
@@ -48,22 +46,29 @@ def gen_reaction_matrices(model,
                           sink,
                           validity_test):
     """
-    gen_reaction_matrices(model, domain_enum, sink, validity_test) ->  generator
+    Returns generator yielding the sparse matrices for each reaction term.
     
     Generator yielding the sparse matrices for the dp/dt term of each reaction,
     matching the ordering implied by the ordering of the reaction propensity
     functions and transtions in the model.
     
-    domain_enum : StateEnum instance enumerating the states in the domain
-    sink : boolean flag indicating if the reaction matrices should add
-        a 'sink' state used to accumulate probability that flows outside
-        of the domain. If sink is set to True, the index of the sink state
-        is chosen to be domain_enum.size
-    validity_test : validity_test(state_array) -> bool_array
-        Returns a boolean array of flags corresponding to those states in
-        state_array that are valid.
+    Arguments:
+    
+     * ``domain_enum`` : :class:`StateEnum` instance enumerating the states
+       in the domain
+     * ``sink`` : boolean flag indicating if the reaction matrices should add
+       a 'sink' state used to accumulate probability that flows outside
+       of the domain. If sink is set to ``True``, the index of the sink state
+       is chosen to be ``domain_enum.size``
+     * ``validity_test`` : a function of the form
+       
+          validity_test(state_array) -> bool_array
         
-        See: non_neg_states(state_array)
+       Returns a boolean array of flags corresponding to those states in
+       ``state_array`` that are valid.
+        
+       See: non_neg_states(state_array)
+    
     """
     
     mdl.validate_model(model)
