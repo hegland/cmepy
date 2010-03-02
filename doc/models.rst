@@ -1,3 +1,5 @@
+.. _models-included:
+
 ======================================
 Models included in :mod:`cmepy.models`
 ======================================
