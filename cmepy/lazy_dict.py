@@ -6,30 +6,47 @@ import itertools
 
 class LazyDict(dict):
     """
-    Dictionary that lazily updates values, when accessed, via supplied function.
+    A dictionary type that lazily updates values when they are accessed.
     
-    All the usual mapping methods should work, lazily updating, in a consistent
-    fashion. Hopefully
+    All the usual dictionary methods work as expected, with automatic lazy
+    updates occuring behind the scenes whenever values are read from the
+    dictionary. 
+    
+    The optional ``items`` argument, if specified, is a mapping instance used
+    to initialise the items in the :class:`LazyDict`.
+    
+    The ``update_value`` argument required by the :class:`LazyDict` constructor
+    must be a function of the form:
+    
+        update_value(k, existing_value, member) -> updated_value
+    
+    This function is called whenever an item with the key ``k`` is read
+    from the :class:`LazyDict`. The second argument ``existing_value``, is
+    the value corresponding to the key ``k`` stored in the :class:`LazyDict`,
+    or ``None``, if the key ``k`` is not contained in the :class:`LazyDict`.
+    The third argument ``member`` is a boolean value indicating if there is
+    an existing value stored under the key ``k``.
+    
+    This function is used as follows by the :class:`LazyDict`. Suppose that the
+    value ``v`` has been stored in a :class:`LazyDict` object ``lazy_dict``
+    under the key ``k``, that is, ``lazy_dict[k] = v``. Then subsequently
+    accessing this value in the usual manner::
+    
+        v_updated = lazy_dict[k]
+    
+    is equivalent to the following two statements::
+    
+        lazy_dict[k] = update_value(k, v, (k in lazy_dict))
+        v_updated = update_value(k, v, (k in lazy_dict))
+    
+    Observe how the value stored in the :class:`LazyDict` under the key ``k``
+    is first updated, using the provided function,
+    with the updated value then being the one returned.
     """
     def __init__(self, update_value, items = None):
         """
-        LazyDict(update_value) -> lazy_dict
-        
-        Where
-        
-            update_value(key, existing_value, member) -> updated_value
-        
-        Suppose:
-        
-            lazy_dict[key] = value
-        
-        Then:
-            v = lazy_dict[key]
-            
-                <=>
-            
-            lazy_dict[key] = update_value(key, value, (key in lazy_dict))
-            v = update_value(key, value, (key in lazy_dict))
+        Returns a LazyDict using the specified ``update_value`` function
+        and optional initial dictionary arguments.
         """
         self.update_value = update_value
         if items is None:

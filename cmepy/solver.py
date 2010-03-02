@@ -1,5 +1,5 @@
 """
-experimental cme_solver implementation
+creates solvers for the chemical master equation
 """
 
 import numpy

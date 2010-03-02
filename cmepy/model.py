@@ -1,5 +1,5 @@
 """
-Model definition constants
+Model definition constants and validation functions
 """
 
 PROPENSITIES = 'propensities'
@@ -50,7 +50,9 @@ class Model(dict):
 
 def create(**entries):
     """
-    create(**entries) -> model
+    Returns a model instance, using the specified entries.
+    
+    Entries should be model parameters as keyword arguments.
     """
     
     m = Model(**entries)
@@ -146,7 +148,7 @@ def must_be_mapping(value, descr=None):
 
 def must_contain_item(value, descr, item):
     """
-    raises KetError if value doesn't contain item
+    raises KeyError if value doesn't contain item
     """
     if item not in value:
         message = 'does not contain: \'%s\'' % str(item)

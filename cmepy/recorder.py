@@ -9,7 +9,7 @@ from cmepy.lazy_dict import LazyDict
 
 def create(*targets):
     """
-    create(*targets) -> cme_recorder
+    Returns a recorder for the random variable groups defined by targets.
     """
     return CmeRecorder(*targets)
 
@@ -36,7 +36,7 @@ class CmeRecorder(object):
     
     def add_target(self, *args):
         """
-        rec.add_target(*targets)
+        Add zero or more targets to the recorder.
         
         where each target has the form (variables[, transforms])
         """
@@ -74,7 +74,9 @@ class CmeRecorder(object):
     
     def _update_measurement(self, var, measurement, member):
         """
-        rec._update_measurement(var, measurement) -> updated_measurement
+        Returns an updated_measurement.
+        
+        This is used to update :class:`LazyDict` instances.
         """
         
         if not member:
@@ -99,7 +101,7 @@ class CmeRecorder(object):
         
     def write(self, t, p):
         """
-        rec.write(t, p) : records measurements of time t and distribution p
+        Records measurements of time t and distribution p
         """
         
         if type(p) is not Distribution:
@@ -113,7 +115,7 @@ class CmeRecorder(object):
     
 def display_plots(rec, vars = None, statistics = None, title = None):
     """
-    plot and display statistics from specified recorder measurement batch.
+    Plot and display statistics from specified recorder measurement batch.
     
     Requires pylab (eg the matplotlib package) to be installed.
     """

@@ -1,5 +1,5 @@
 """
-A few utility routines. 27/5/09. R. Fletcher-Costin, ANU
+Various utility routines
 """
 
 import itertools
@@ -7,7 +7,7 @@ import numpy
 
 def consecutive_pairs(p):
     """
-    consecutive_pairs(p) -> (p0, p1), (p1, p2), ...
+    Returns (p0, p1), (p1, p2), ...
     
     where p is an iterator
     """
@@ -23,14 +23,14 @@ def consecutive_pairs(p):
     
 def non_neg(x):
     """
-    non_neg(x) -> max(x, 0) [array operation]
+    Returns max(x, 0) [array operation]
     """
     
     return numpy.maximum(x, 0)
 
 def indices_ext(shape, slices=None, origin=None):
     """
-    indices_ext(shape [, slices [, origin]]) -> indices array
+    Returns an array of indices.
     
     An interface to numpy's mgrid routine, supporting simpler slicing notation.
     

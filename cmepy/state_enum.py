@@ -1,3 +1,7 @@
+"""
+maintains enumerations of states in order to define indexing schemes
+"""
+
 import itertools
 
 import numpy

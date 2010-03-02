@@ -4,7 +4,5 @@
 
 .. automodule:: cmepy.lazy_dict
 
-   .. autoclass:: LazyDict(dict)
-                  
-      .. automethod:: __init__
+   .. autoclass:: LazyDict
       

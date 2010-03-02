@@ -1,5 +1,24 @@
+"""
+stores marginal distributions for random variables
+"""
+
 class Measurement(object):
+    """
+    Stores the marginal distributions for a random variable.
+    
+    Measurement instances are created by cmepy.recorder.CmeRecorder objects.
+    
+    The random variable is specified by its name and transform when
+    instantiating a Measurement object.
+    
+    Statistics, computed from the marginal distributions, may be accessed
+    as attributes (this access is read only and not cached, it is computed
+    each time it is accessed).
+    """
     def __init__(self, name = None, transform = None):
+        """
+        Creates a measurement for the specified random variable.
+        """
         object.__init__(self)
         self.name = name
         if transform is None:
@@ -13,17 +32,20 @@ class Measurement(object):
         return len(self.times)
     
     def write(self, t, p):
+        """
+        Writes the time t and marginal distribution derived from p.
+        """
         self.times.append(t)
         self.distributions.append(p.map(self.transform))
     
     def get_statistic(self, stat_name):
         """
-        m.get_statistic(stat_name) -> list of statistic values over time
+        Returns list of statistic values over time.
         
         Alternatively, statistics may be obtained directly as attributes
         of the Measurement instance m, that is,
         
-            m.get_statistic(stat_name) <=> m.stat_name
+        m.get_statistic(stat_name) <=> m.stat_name
         """
         statistic = []
         for d in self.distributions:
@@ -34,6 +56,9 @@ class Measurement(object):
         return statistic
     
     def __getattribute__(self, attrname):
+        """
+        Allows statistics to be accessed as if they were attributes
+        """
         try:
             return object.__getattribute__(self, attrname)
         except AttributeError:

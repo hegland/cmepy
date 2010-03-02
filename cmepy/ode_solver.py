@@ -2,6 +2,9 @@ import numpy
 import scipy.integrate
 
 class Solver(object):
+    """
+    Solver is a wrapper of scipy's VODE solver.
+    """
     def __init__(self, dy_dt, y_0, t_0 = 0.0, ode_config_callback = None):
         """
         Initialise a Solver using the supplied derivative function dy_dt,

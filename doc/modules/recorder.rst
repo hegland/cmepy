@@ -108,4 +108,3 @@ derived from the distributions:
    defined when ``measurement`` contains one-dimensional distributions.
  * ``measurement.covariance`` : list of the covariances. Only defined when
    ``measurement`` contains two-dimensional distributions.
-
