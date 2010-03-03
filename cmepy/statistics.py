@@ -107,8 +107,6 @@ class Distribution(dict):
     
     def to_dense(self, shape, origin=None):
         """
-        d.to_dense(shape[, origin]) -> array
-        
         Returns dense version of distribution for given array shape and origin
         """
         
@@ -118,11 +116,45 @@ class Distribution(dict):
         states = set(domain.to_iter(domain.from_rect(shape, origin=origin)))
         states &= set(self.iterkeys())
         p_dense = numpy.zeros(shape, dtype=numpy.float)
+        origin = numpy.asarray(origin)
         for state in states:
             probability = self[state]
-            shifted_state = tuple(numpy.asarray(state) - numpy.asarray(origin))
+            shifted_state = tuple(numpy.asarray(state) + origin)
             p_dense[shifted_state] += probability
         return p_dense
+    
+    def from_dense(self, p_dense, origin=None):
+        """
+        Replaces distribution using array p_dense **in place**
+        
+        Returns self
+        
+        The argument ``p_dense`` should be a numpy array of probabilities.
+        The indices of the array are used to define the corresponding states.
+        Multi-dimensional arrays are supported.
+        
+        Optional argument ``origin`` defines the origin. This is added to
+        the indices when defining the states.
+        """
+        
+        p_dense = numpy.asarray(p_dense)
+        shape = numpy.shape(p_dense)
+        
+        states = numpy.asarray([numpy.ravel(a) for a in numpy.indices(shape)])
+        states = numpy.transpose(states)
+        
+        if origin is None:
+            origin = (0, )*len(shape)
+        origin = numpy.asarray(origin)
+
+        self.clear()
+        
+        for state in states:
+            probability = p_dense[tuple(state)]
+            shifted_state = tuple(state + origin)
+            if probability != 0:
+                self[shifted_state] = probability
+        return self
     
     def compress(self, epsilon):
         """

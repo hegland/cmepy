@@ -46,6 +46,38 @@ class StatisticsTests(unittest.TestCase):
         cov = statistics.covariance(p_2)
         cov_goal = -1.1*-1.2*0.2 -1.1*-0.2*0.3 -0.1*-1.2*0.2 +1.9*1.8*0.3
         assert_almost_equal(cov, cov_goal)
+    
+    def test_dense_conversions(self):
+        p = statistics.Distribution()
+        
+        p_dense = numpy.array(
+            [
+                [0.0, 0.2, 0.1, 0.0],
+                [0.3, 0.0, 0.1, 0.3],
+            ]
+        )
+        
+        p.from_dense(p_dense)
+        
+        assert len(p) == 5
+        
+        assert p[(0, 1)] == 0.2
+        assert p[(0, 2)] == 0.1
+        
+        assert p[(1, 0)] == 0.3
+        assert p[(1, 2)] == 0.1
+        assert p[(1, 3)] == 0.3
+        
+        p.from_dense(p_dense, origin = (-1, 3))
+        
+        assert len(p) == 5
+        
+        assert p[(-1, 4)] == 0.2
+        assert p[(-1, 5)] == 0.1
+        
+        assert p[(0, 3)] == 0.3
+        assert p[(0, 5)] == 0.1
+        assert p[(0, 6)] == 0.3
         
 def suite():
     suite = unittest.TestLoader().loadTestsFromTestCase(StatisticsTests)
