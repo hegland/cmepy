@@ -47,8 +47,9 @@ See http://fcostin.github.com/cmepy/
 
 Authors
 ~~~~~~~
-Reuben Fletcher-Costin ( reuben dot fletchercostin at gmail dot com )
-Markus Hegland ( markus dot hegland at anu dot edu dot au )
+
+ * Reuben Fletcher-Costin ( reuben dot fletchercostin at gmail dot com )
+ * Markus Hegland ( markus dot hegland at anu dot edu dot au )
 
 
 .. _Python: http://www.python.org/
