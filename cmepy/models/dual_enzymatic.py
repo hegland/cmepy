@@ -3,26 +3,31 @@ Example system with two enzymatic reactions.
 
 System :
     S + E1 <--> C1 --> P + E1
-    P + E2 <--> C2 --> P + E2
+    P + E2 <--> C2 --> S + E2
 """
 
 from cmepy import model
 
+def default_initial_copies():
+    """
+    Returns default initial copies of species S, E1, E2 for the model.
+    """
+    return {
+        'S' : 50,
+        'E1' : 20,
+        'E2' : 10,
+    }
+        
+
 def gen_states(initial_copies = None):
     """
-    gen_states([initial_copies]) -> generator
-    
     Returns generator yielding all reachable states in state space.
     
     NB state space format: (c2_copies, c1_copies, s_copies)
     """
     
     if initial_copies is None:
-        initial_copies = {
-            'S' : 100,
-            'E1' : 50,
-            'E2' : 10,
-        }
+        initial_copies = default_initial_copies()
     
     s_0 = initial_copies['S']
     e1_0 = initial_copies['E1']
@@ -35,19 +40,13 @@ def gen_states(initial_copies = None):
 
 def create_model(initial_copies = None):
     """
-    create_model([initial_copies]) -> mapping
-    
     Returns mapping storing model.
     
     NB state space format: (c2_copies, c1_copies, s_copies)
     """
     
     if initial_copies is None:
-        initial_copies = {
-            'S' : 100,
-            'E1' : 50,
-            'E2' : 10,
-        }
+        initial_copies = default_initial_copies()
     
     s_copies = lambda *x : x[2]
     c1_copies = lambda *x : x[1]
@@ -108,19 +107,33 @@ def main():
     
     import numpy
     import cmepy.solver
-    from cmepy import domain
+    import cmepy.recorder
+    import cmepy.domain
+    
+    model = create_model()
     
     solver = cmepy.solver.create(
-        model = create_model(),
+        model = model,
         sink = True,
-        domain_states = domain.from_iter(gen_states()),
+        domain_states = cmepy.domain.from_iter(gen_states()),
+    )
+    
+    recorder = cmepy.recorder.create(
+        (model.species, model.species_counts)
     )
     
     t_final = 10.0
-    steps_per_time = 100
+    steps_per_time = 25
     time_steps = numpy.linspace(0.0, t_final, int(steps_per_time*t_final) + 1)
     
-    print 'solving dual enzymatic system (this may take some time ...)'
-    for t in time_steps:
-        print '\t = %f' % t
+    print 'solving dual enzymatic system to t_final = %.2f' % t_final
+    for step, t in enumerate(time_steps):
+        print 't = %.2f' % t
         solver.step(t)
+        # record results every second, not every step
+        if step % steps_per_time == 0:
+            print 'recording solution'
+            p, p_sink = solver.y
+            recorder.write(t, p)
+    
+    cmepy.recorder.display_plots(recorder)

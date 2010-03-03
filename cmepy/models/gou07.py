@@ -1,10 +1,19 @@
 """
-A collection of models from the literature
-naming   Gou07_a, Gou07_b   where Gou07 refers to the paper
-in my bibliography and a, b etc is a counter referring to
-the specific model in the paper
+Quadratic autocatalator and unidirection dimerisation models.
 
-TODO: fix doc to give a link to the actual paper ?
+These models are adapted from the examples given by Goutsias, 2007:
+
+@article{goutsias2007classical,
+  title={{Classical versus stochastic kinetics modeling
+  of biochemical reaction systems}},
+  author={Goutsias, J.},
+  journal={Biophysical Journal},
+  volume={92},
+  number={7},
+  pages={},
+  year={2007},
+  publisher={Elsevier}
+}
 """
 
 import numpy

@@ -26,14 +26,13 @@ and is defined as
 
 while the propensity for the latter reaction is the same, with the species
 counts :math:`[A]` and :math:`[B]` swapped. The two 'death' reactions
-are elementary and occur with propensities of :math:`1`.
+are elementary and occur with rate coefficients of :math:`1`.
 
 Running the model
 ~~~~~~~~~~~~~~~~~
+This model is defined by the module :mod:`cmepy.model.burr08`. The source
+code for this model is listed below.
 
-This model is defined by the module
-`cmepy/model/burr08.py
-<http://github.com/fcostin/cmepy/blob/master/cmepy/models/burr08.py>`_.
 To see this model in action, fire up the Python interpreter, and enter:
 
     >>> from cmepy.models import burr08
@@ -54,3 +53,9 @@ Sample results
    
 .. image:: burr08_plot_t13.png
    :scale: 100
+
+
+Source code
+~~~~~~~~~~~
+
+.. literalinclude:: ../../cmepy/models/burr08.py

@@ -1,3 +1,5 @@
+.. _example-enzyme-kinetics:
+
 ========================
 Example: enzyme kinetics
 ========================

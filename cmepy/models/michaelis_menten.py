@@ -1,14 +1,24 @@
 """
-Models for Michaelis-Menten systems
+Model for Michaelis-Menten type enzymatic reaction systems
 """
+
 from cmepy import model
 from cmepy.util import non_neg
 
 def create_model_michaelis_menten(s_0 = 50, e_0 = 10):
     """
-    Creates a model for a simple michaelis-menten system:
+    Creates a model for a simple michaelis-menten enzymatic reaction system:
     
     E+S <-> C -> E + D
+    
+    The reaction propensities are
+    
+    E+S -> C : 0.01
+    C -> E+S : 35.0
+    C -> E+D : 30.0
+    
+    while the initial counts are s_0 copies of S, e_0 copies of E, 
+    and zero copies of both C and D.
     """
     
     # first, define functions mapping states to species copy counts

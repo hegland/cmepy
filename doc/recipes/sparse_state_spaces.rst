@@ -99,6 +99,8 @@ after transformation via the function :func:`domain.from_iter`::
         domain_states = domain.from_iter(gen_states(25))
     )
 
+.. _sparse-state-space-gene-toggle-example:
+
 Example: sparse state space for Gardner's gene toggle model
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Consider the following system, consisting of the two imaginatively-named
