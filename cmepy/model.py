@@ -39,7 +39,7 @@ class Model(dict):
             if attrname in self:
                 return self[attrname]
             else:
-                lament = 'model has no attribute \'%s\%'
+                lament = 'model has no attribute \'%s\''
                 raise AttributeError(lament % str(attrname))
     
     def validate(self):
