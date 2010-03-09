@@ -78,6 +78,146 @@ class StatisticsTests(unittest.TestCase):
         assert p[(0, 3)] == 0.3
         assert p[(0, 5)] == 0.1
         assert p[(0, 6)] == 0.3
+    
+    def test_distribution_addition(self):
+        a = statistics.Distribution(
+            {
+                (0, 0) : 0.4,
+                (0, 1) : 0.3,
+                (1, 0) : 0.2,
+                (1, 1) : 0.1
+            }
+        )
+        
+        b = statistics.Distribution(
+            {
+                (0, -1) : 0.1,
+                (0, 0) : 0.2,
+                (0, 1) : 0.3,
+                (0, 2) : 0.4
+            }
+        )
+        
+        c = a + b
+        
+        assert len(c) == 6
+        assert_almost_equal(c[(0, -1)], 0.1)
+        assert_almost_equal(c[(0, 0)], 0.6)
+        assert_almost_equal(c[(0, 1)], 0.6)
+        assert_almost_equal(c[(1, 0)], 0.2)
+        assert_almost_equal(c[(1, 1)], 0.1)
+        assert_almost_equal(c[(0, 2)], 0.4)
+    
+    def test_distribution_subtraction(self):
+        a = statistics.Distribution(
+            {
+                (0, 0) : 0.4,
+                (0, 1) : 0.3,
+                (1, 0) : 0.2,
+                (1, 1) : 0.1
+            }
+        )
+        
+        b = statistics.Distribution(
+            {
+                (0, -1) : 0.1,
+                (0, 0) : 0.2,
+                (0, 1) : 0.3,
+                (0, 2) : 0.4
+            }
+        )
+        
+        c = b - a
+        
+        assert len(c) == 6
+        assert_almost_equal(c[(0, -1)], 0.1)
+        assert_almost_equal(c[(0, 0)], -0.2)
+        assert_almost_equal(c[(0, 1)], 0.0)
+        assert_almost_equal(c[(1, 0)], -0.2)
+        assert_almost_equal(c[(1, 1)], -0.1)
+        assert_almost_equal(c[(0, 2)], 0.4)
+    
+    def test_distribution_scalar_multiplication(self):
+        a = statistics.Distribution(
+            {
+                (0, 0) : 0.4,
+                (0, 1) : 0.3,
+                (1, 0) : 0.2,
+                (1, 1) : 0.1
+            }
+        )
+        
+        b = - 3.2
+        
+        # left mult with scalar
+        c = a * b
+        
+        assert len(c) == 4
+        assert_almost_equal(c[(0, 0)], 0.4*b)
+        assert_almost_equal(c[(0, 1)], 0.3*b)
+        assert_almost_equal(c[(1, 0)], 0.2*b)
+        assert_almost_equal(c[(1, 1)], 0.1*b)
+        
+        # right mult with scalar
+        c = b * a
+        
+        assert len(c) == 4
+        assert_almost_equal(c[(0, 0)], 0.4*b)
+        assert_almost_equal(c[(0, 1)], 0.3*b)
+        assert_almost_equal(c[(1, 0)], 0.2*b)
+        assert_almost_equal(c[(1, 1)], 0.1*b)
+    
+    def test_distribution_convex_combination(self):
+        a = statistics.Distribution(
+            {
+                (0, 0) : 0.4,
+                (0, 1) : 0.3,
+                (1, 0) : 0.2,
+                (1, 1) : 0.1
+            }
+        )
+        
+        b = statistics.Distribution(
+            {
+                (0, -1) : 0.1,
+                (0, 0) : 0.2,
+                (0, 1) : 0.3,
+                (0, 2) : 0.4
+            }
+        )
+        
+        tau = 0.73111
+        
+        # let c be a convex combination of a and b, written in a wierd way.
+        # this should test scalar mult, addition, unary negation operator
+        # etc.
+        c = a * tau + b + tau * (-b)
+        
+        assert len(c) == 6
+        assert_almost_equal(c[(0, -1)], 0.1 * (1.0 - tau))
+        assert_almost_equal(c[(0, 0)], 0.4 * tau + 0.2 * (1.0 - tau))
+        assert_almost_equal(c[(0, 1)], 0.3 * tau + 0.3 * (1.0 - tau))
+        assert_almost_equal(c[(1, 0)], 0.2 * tau)
+        assert_almost_equal(c[(1, 1)], 0.1 * tau)
+        assert_almost_equal(c[(0, 2)], 0.4 * (1.0 - tau))
+    
+    def test_norms_and_metrics(self):
+        a = statistics.Distribution(
+            {
+                (0, 0) : 0.4,
+                (0, 1) : 0.3,
+                (1, 0) : 0.2,
+                (1, 1) : 0.1
+            }
+        )
+        
+        for p in numpy.linspace(0.1, 2.5, 25):
+            assert_almost_equal(a.lp_distance(a, p), 0.0)
+            assert a.lp_norm(p) > 0.0
+        
+        assert numpy.isinf(a.kl_divergence(statistics.Distribution()))
+        assert_almost_equal(a.kl_divergence(a), 0.0)
+        
         
 def suite():
     suite = unittest.TestLoader().loadTestsFromTestCase(StatisticsTests)

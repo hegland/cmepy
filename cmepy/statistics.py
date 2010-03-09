@@ -168,6 +168,77 @@ class Distribution(dict):
         """
         
         return Distribution(compress(self, epsilon))
+    
+    def __add__(self, rhs):
+        """
+        Returns sum of two distributions
+        """
+        d = Distribution(self)
+        for key in rhs:
+            d[key] = d.get(key, 0.0) + rhs[key]
+        return d
+    
+    def __sub__(self, rhs):
+        """
+        Returns difference of two distributions
+        """
+        d = Distribution(self)
+        for key in rhs:
+            d[key] = d.get(key, 0.0) - rhs[key]
+        return d
+    
+    def __mul__(self, rhs):
+        """
+        Returns distribution multiplied by scalar
+        """
+        rhs = float(rhs)
+        if rhs == 0.0:
+            return Distribution()
+        else:
+            return Distribution([(k, v*rhs) for (k, v) in self.iteritems()])
+    
+    def __rmul__(self, lhs):
+        """
+        Returns distribution multiplied by scalar
+        """
+        return self * lhs
+        
+    def __neg__(self):
+        """
+        Returns distribution multiplied by the scalar -1
+        """
+        return self * -1
+    
+    def __pos__(self):
+        """
+        Returns distribution multiplied by the scalar +1
+        """
+        return Distribution(self)
+    
+    def lp_norm(self, p=1):
+        """
+        Returns Lp norm of distribution. Default p = 1.
+        """
+        return lp_norm(self, p)
+    
+    def lp_distance(self, other, p=1):
+        """
+        Returns Lp distance to the distribution other. Default p = 1.
+        """
+        return lp_distance(self, other, p)
+    
+    def kl_divergence(self, other):
+        """
+        Returns KL divergence to the distribution other from this distribution.
+        
+        The Kullback-Leibler (KL) divergence of q from p is defined as
+    
+        .. math::
+    
+            \textrm{KL-divergence}(p, q) := \sum{}_x p_x \log{p_x / q_x}
+        
+        """
+        return kl_divergence(self, other)
 
 def map_distribution_simple(f, p, g=None):
     """
@@ -351,3 +422,42 @@ def compress(p, epsilon):
             p_compressed[tuple(state)] = probability
         
     return p_compressed
+
+def lp_norm(d, p = 1):
+    """
+    Returns the Lp norm of the distribution d. Default p = 1.
+    """
+    x = numpy.array(d.values(), dtype=numpy.float)
+    return numpy.linalg.norm(x, ord = p)
+
+def lp_distance(x, y, p = 1):
+    """
+    Returns the Lp distance between the distributions x & y. Default p = 1.
+    
+    Equivalent to lp_norm(x - y, p)
+    """
+    return lp_norm(x - y, p)
+
+def kl_divergence(p, q):
+    """
+    Returns KL-divergence of distribution q from distribution p.
+    
+    The Kullback-Leibler (KL) divergence is defined as
+    
+    .. math::
+    
+       \textrm{KL-divergence}(p, q) := \sum{}_x p_x \log{p_x / q_x}
+    
+    Warning: this function uses numpy's scalar floating point types to
+    perform the evaluation. Therefore, the result may be non-finite.
+    For example, if the state x has non-zero probability for distribution p,
+    but zero probability for distribution q, then the result will be
+    non-finite.
+    """
+    accum = 0.0
+    for x in p:
+        p_x = numpy.float_(p[x])
+        if p_x != 0.0:
+            q_x = numpy.float_(q.get(x, 0.0))
+            accum += p_x * numpy.log(p_x / q_x)
+    return accum
