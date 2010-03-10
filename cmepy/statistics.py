@@ -235,7 +235,8 @@ class Distribution(dict):
     
         .. math::
     
-            \textrm{KL-divergence}(p, q) := \sum{}_x p_x \log{p_x / q_x}
+           \\textrm{KL-divergence}(p, q) :=
+           \\sum_{x} p(x) \\log{} \\frac{p(x)}{q(x)}
         
         """
         return kl_divergence(self, other)
@@ -446,7 +447,8 @@ def kl_divergence(p, q):
     
     .. math::
     
-       \textrm{KL-divergence}(p, q) := \sum{}_x p_x \log{p_x / q_x}
+           \\textrm{KL-divergence}(p, q) :=
+           \\sum_{x} p(x) \\log{} \\frac{p(x)}{q(x)}
     
     Warning: this function uses numpy's scalar floating point types to
     perform the evaluation. Therefore, the result may be non-finite.

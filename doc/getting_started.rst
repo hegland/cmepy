@@ -77,6 +77,20 @@ package index:
  * `VirtualEnv <http://pypi.python.org/pypi/virtualenv>`_
  * `VirtualEnvWrapper <http://pypi.python.org/pypi/virtualenvwrapper>`_
 
+Uninstalling CmePy
+~~~~~~~~~~~~~~~~~~
+I strongly recommend using
+`pip <http://pypi.python.org/pypi/pip>`_ to install and uninstall
+Python packages. If pip is installed, then CmePy may be uninstalled via::
+
+    pip uninstall cmepy
+
+.. Note::
+   
+   pip is unable to uninstall CmePy if CmePy has been installed locally using
+   the environment variables method. In this case, CmePy may be uninstalled
+   by manually removing CmePy's directory from the path ``${HOME}/lib/python``.
+
 .. _Python: http://www.python.org/
 .. _SciPy: http://www.scipy.org/
 .. _Numpy: http://numpy.scipy.org/
