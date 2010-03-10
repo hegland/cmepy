@@ -4,7 +4,7 @@
 
 Overview
 ~~~~~~~~
-This model defines the following 'catalytic reacion' system:
+This model defines the following 'catalytic reaction' system:
 
 .. math::
 
