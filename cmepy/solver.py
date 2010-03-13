@@ -1,5 +1,5 @@
 """
-creates solvers for the chemical master equation
+Creates solvers for the Chemical Master Equation (CME).
 """
 
 import numpy
@@ -50,12 +50,11 @@ def create(model,
            sink,
            p_0=None,
            t_0=None,
+           sink_0=None,
            time_dependencies=None,
            domain_states=None):
     """
-    create(model,sink[,p_0,time_dependencies,states]) -> solver
-    
-    returns a solver for the Chemical Master Equation of the given model.
+    Returns a solver for the Chemical Master Equation of the given model.
     
     arguments:
     
@@ -75,6 +74,9 @@ def create(model,
             otherwise, a ValueError will be raised.
         
         t_0 : (optional) initial time, defaults to 0.0
+        
+        sink_0 : (optional) initial sink probability, defaults to 0.0
+            Only a valid argument if sink is set to True.
         
         time_dependencies : (optional) By default, reaction propensities are
             time independent. If specified, time_dependencies must be of the
@@ -111,6 +113,12 @@ def create(model,
     
     mdl.validate_model(model)
     
+    if sink_0 is not None:
+        if not sink:
+            raise ValueError('sink_0 may not be specified if sink is False')
+        sink_0 = float(sink_0)
+    else:
+        sink_0 = 0.0
     
     # determine states in domain, then construct an enumeration of the
     # domain states
@@ -155,10 +163,9 @@ def create(model,
     
     # construct and initialise solver
     if sink:
-        sink_p_0 = 0.0
         cme_solver = ode_solver.Solver(
             dy_dt,
-            y_0 = (p_0, sink_p_0),
+            y_0 = (p_0, sink_0),
             t_0 = t_0
         )
         pack, unpack = create_packing_functions(domain_enum)

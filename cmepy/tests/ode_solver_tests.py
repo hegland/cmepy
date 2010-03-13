@@ -82,13 +82,10 @@ class OdeSolverTests(unittest.TestCase):
         for t in time_steps:
             solver.step(t)
             assert solver.t == t
-            y_current_1 = solver.y
-            numpy.testing.utils.assert_almost_equal(y_current_1, y_0+t)
+            y = solver.y
+            numpy.testing.utils.assert_almost_equal(y, y_0+t)
             # this operation should not corrupt the solver state ...
-            y_current_1[:] = (-1.0e7, 1.0e4, 1.0e-4, 1.0e5)
-            y_current_2 = solver.y
-            numpy.testing.utils.assert_almost_equal(y_current_2, y_0+t)
-            assert y_current_1 is not y_current_2
+            y[:] = (-1.0e7, 1.0e4, 1.0e-4, 1.0e5)
     
     def test_prevent_backwards_steps(self):
         def dy_dt(t, y):

@@ -5,6 +5,26 @@ Various utility routines
 import itertools
 import numpy
 
+def shape_invariant(f):
+    """
+    Returns wrapped copy of f that ensures output shape matches input shape.
+    
+    Details : if the shapes of the first argument and output of the function f 
+    do not agree, the output will be expanded via ``numpy.tile`` until it is
+    the same shape as the first input. Shapes are computed via ``numpy.shape``.
+    """
+    
+    def shape_invariant_f(*args):
+        x = f(*args)
+        in_shape = numpy.shape(args[0])
+        out_shape = numpy.shape(x)
+        if in_shape != out_shape:
+            out_shape += (1, )*(len(in_shape) - len(out_shape))
+            tiling = tuple(x / y for (x, y) in zip(in_shape, out_shape))
+            x = numpy.tile(x, tiling)
+        return  x
+    return shape_invariant_f
+    
 def consecutive_pairs(p):
     """
     Returns (p0, p1), (p1, p2), ...

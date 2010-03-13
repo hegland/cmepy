@@ -11,17 +11,7 @@ def compute_propensity(prop, states):
     """
     Returns the propensity ``prop`` evaluated over ``states``.
     """
-    
-    num_states = numpy.shape(states)[1]
-    output_shape = (num_states, )
-    nu = prop(*states)
-    if numpy.shape(nu) == output_shape:
-        return nu
-    elif numpy.shape(nu) == ():
-        return nu*numpy.ones(output_shape)
-    else:
-        lament = 'data returned by propensity function %s has bad shape: %s'
-        raise ValueError(lament % (str(prop), str(numpy.shape(nu))))
+    return prop(*states)
 
 def optimise_csr_matrix(csr_matrix):
     """    
