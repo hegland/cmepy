@@ -15,8 +15,14 @@ Numpy_ 1.3 are used.
 
 Obtaining CmePy
 ~~~~~~~~~~~~~~~
-Provided you already have the Git_ version control system installed, you may
-check out a copy of the latest version of CmePy from GitHub, via::
+The easiest way to obtain CmePy is to download an archive of
+the master branch from CmePy's GitHub repository:
+
+`Download CmePy now as a ZIP or TAR archive!
+<http://github.com/fcostin/cmepy/archives/master>`_
+
+Alternatively, if you have the Git_ version control system installed, you may
+prefer to check out a copy of CmePy directly from GitHub, via::
 
 	git clone git://github.com/fcostin/cmepy.git
 
