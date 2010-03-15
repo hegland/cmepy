@@ -1,4 +1,4 @@
-CmePy v0.2
+CmePy v0.3
 ==========
 --------------------------------------------
 a Chemical Master Equation solver for Python
