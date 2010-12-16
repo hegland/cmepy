@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """
 Builds CME matrix for dp/dt, broken into terms for each reaction.
 """
@@ -34,7 +35,8 @@ def non_neg_states(state_array):
 def gen_reaction_matrices(model,
                           domain_enum,
                           sink,
-                          validity_test):
+                          validity_test,
+                          outflow=False):
     """
     Returns generator yielding the sparse matrices for each reaction term.
     
@@ -67,6 +69,8 @@ def gen_reaction_matrices(model,
         raise NotImplementedError('non-zero domain_enum offset unsupported')
     
     sink = bool(sink)
+    if sink and outflow:
+        raise ValueError('sink and outflow cannot be both True')
     if sink:
         sink_index = domain_enum.size
     
@@ -121,6 +125,21 @@ def gen_reaction_matrices(model,
             cols.append(int_src_indices)
             rows.append(int_dst_indices)
             
+        if outflow:
+            valid = validity_test(dst_states[:, exterior])
+            num_valid_states = numpy.add.reduce(valid)
+            
+            if num_valid_states > 0:
+                ext_src_indices = numpy.array(src_indices[exterior][valid])
+                ext_src_states = numpy.array(src_states[:, exterior][:, valid])
+                ext_coefficients = compute_propensity(propensity,
+                                                      ext_src_states)
+                
+                # these terms account for the flux out of the truncated domain
+                data.append(-ext_coefficients)
+                cols.append(ext_src_indices)
+                rows.append(ext_src_indices)
+                
         # account for the sparse matrix data for the flux out of the interior
         # states of the truncated domain and into the sink state
         
