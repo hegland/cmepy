@@ -3,7 +3,7 @@ Creates solvers for the Chemical Master Equation (CME).
 """
 
 import numpy
-from cmepy import cme_matrix, domain, ode_solver, state_enum
+from cmepy import cme_matrix, domain, ode_solver, other_solver, state_enum
 from cmepy import model as mdl
 
 def create_packing_functions(domain_enum):
@@ -52,7 +52,10 @@ def create(model,
            t_0=None,
            sink_0=None,
            time_dependencies=None,
-           domain_states=None):
+           domain_states=None,
+           solver=ode_solver.Solver,
+           outflow=False,
+           **solver_args):
     """
     Returns a solver for the Chemical Master Equation of the given model.
     
@@ -112,6 +115,9 @@ def create(model,
     """
     
     mdl.validate_model(model)
+
+    if sink and outflow:
+        raise ValueError('sink and outflow cannot be both True')
     
     if sink_0 is not None:
         if not sink:
@@ -153,7 +159,8 @@ def create(model,
         model,
         domain_enum,
         sink,
-        cme_matrix.non_neg_states
+        cme_matrix.non_neg_states,
+        outflow=outflow
     )
     reaction_matrices = list(gen_matrices)
     dy_dt = cme_matrix.create_diff_eqs(
@@ -161,12 +168,16 @@ def create(model,
         phi = time_dependencies
     )
     
+    if solver_args:
+        solver_args['reaction_matrices'] = reaction_matrices
+
     # construct and initialise solver
     if sink:
-        cme_solver = ode_solver.Solver(
+        cme_solver = solver(
             dy_dt,
             y_0 = (p_0, sink_0),
-            t_0 = t_0
+            t_0 = t_0,
+            **solver_args
         )
         pack, unpack = create_packing_functions(domain_enum)
         cme_solver.set_packing(
@@ -177,10 +188,11 @@ def create(model,
     else:
         pack = domain_enum.pack_distribution
         unpack = domain_enum.unpack_distribution
-        cme_solver = ode_solver.Solver(
+        cme_solver = solver(
             dy_dt,
             y_0 = p_0,
-            t_0 = t_0
+            t_0 = t_0,
+            **solver_args
         )
         cme_solver.set_packing(
             pack,
