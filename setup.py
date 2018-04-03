@@ -10,7 +10,7 @@ CmePy setup script
 #      setuptools, if any
 
 from distribute_setup import use_setuptools
-use_setuptools(no_fake = True)
+## use_setuptools(no_fake = True)
 
 VERSION = '0.3.0'
 
