@@ -120,7 +120,7 @@ def intersection(las1, las2):
         return las
     slas = las[:, order]
     equal_adj = numpy.logical_and.reduce(slas[:, :-1] == slas[:, 1:])
-    return slas[:, equal_adj]
+    return slas[:, :-1][:, equal_adj]
 
 def union(las1, las2):
     """
