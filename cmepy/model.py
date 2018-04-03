@@ -2,6 +2,8 @@
 Model definition constants and validation functions
 """
 
+from cmepy.util import shape_invariant
+
 PROPENSITIES = 'propensities'
 TRANSITIONS = 'transitions'
 NAME = 'name'
@@ -28,6 +30,17 @@ class Model(dict):
     def __init__(self, **entries):
         dict.__init__(self, entries)
         self.validate()
+        
+        # pre-process propensity and species count functions
+        self._ensure_shape_invariance(PROPENSITIES)
+        if SPECIES_COUNTS in self:
+            self._ensure_shape_invariance(SPECIES_COUNTS)
+    
+    def _ensure_shape_invariance(self, x):
+        """
+        Applies shape invariance decorator to all functions stored under x
+        """
+        self[x] = [shape_invariant(f) for f in self[x]]
     
     def __getattribute__(self, attrname):
         """

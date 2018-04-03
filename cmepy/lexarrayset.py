@@ -128,6 +128,13 @@ def union(las1, las2):
     """
     return unique(numpy.hstack((las1, las2)))
 
+def shift(las, offset):
+    """
+    shifts all states in las by offset
+    """
+    offset = numpy.asarray(offset)[:, numpy.newaxis]
+    return las + offset
+
 def empty(dim):
     """
     returns an empty LexArraySet of dimension dim.
@@ -218,8 +225,7 @@ class LexArraySet(object):
         
         offset must be of compatible shape to the rows of las.
         """
-        offset = numpy.asarray(offset)[:, numpy.newaxis]
-        return LexArraySet(self.data + offset, unique_data=True)
+        return LexArraySet(shift(self.data, offset), unique_data=True)
     
     def difference_update(self, rhs):
         """

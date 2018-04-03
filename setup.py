@@ -12,7 +12,7 @@ CmePy setup script
 from distribute_setup import use_setuptools
 use_setuptools(no_fake = True)
 
-VERSION = '0.2.1'
+VERSION = '0.3.0'
 
 from setuptools import setup, find_packages
 setup(

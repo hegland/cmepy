@@ -1,4 +1,4 @@
-CmePy v0.2
+CmePy v0.3
 ==========
 --------------------------------------------
 a Chemical Master Equation solver for Python
@@ -25,8 +25,11 @@ CmePy also works with Python_ 2.6, provided SciPy_ 0.7 and Numpy_ 1.3 are used.
 
 Obtaining CmePy
 ~~~~~~~~~~~~~~~
-Provided you already have the Git_ version control system installed, you may
-check out a copy of the latest version of CmePy from GitHub, via::
+`Download CmePy now as a ZIP or TAR archive.
+<http://github.com/fcostin/cmepy/archives/master>`_
+
+Alternatively, if you have the Git_ version control system installed, you may
+prefer to check out a copy of CmePy directly from GitHub, via::
 
 	git clone git://github.com/fcostin/cmepy.git
 
@@ -40,6 +43,10 @@ Once CmePy has been obtained, the package can be tested by running the
 CmePy may then be installed via the **setup.py** script::
 
     python setup.py install
+
+More detailed installation tips are available via the
+`online documentation <http://fcostin.github.com/cmepy/>`_.
+
 
 Documentation
 ~~~~~~~~~~~~~

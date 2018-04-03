@@ -22,6 +22,7 @@ class Solver(object):
         self._dy_dt = dy_dt
         self._ode = None
         self._t = t_0
+        self._y = None
         self._y_0 = y_0
         self._custom_packing = False
         self._ode_config_callback = ode_config_callback
@@ -103,15 +104,16 @@ class Solver(object):
     @property
     def y(self):
         """
-        Read-only property, returning a *copy* of the current solution y.
+        Read-only property, returning the current solution y.
         """
         if self._ode is None:
             self._initialise_ode()
         # ensure self._y is a *copy* of the solver's current solution
-        y = numpy.array(self._ode.y)
-        if self._custom_packing:
-            y = self._unpack(y)
-        return y
+        if self._y is None:
+            self._y = numpy.array(self._ode.y)
+            if self._custom_packing:
+                self._y = self._unpack(self._y)
+        return self._y
     
     def step(self, t):
         """
@@ -140,3 +142,4 @@ class Solver(object):
                          '(look for messages from DVODE / vode)')
             raise RuntimeError, complaint
         self._t = t
+        self._y = None

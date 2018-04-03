@@ -56,7 +56,7 @@ is :math:`0, 1, 2, 3, \ldots, 20`.
 Finally, the argument ``initial_state`` defines
 that the CME is initialised in the state ``(0, )``. In other words,
 at the initial time :math:`t_0 = 0`, the probability that there have been
-zero occurances of the reaction :math:`A \xrightarrow{} B` is 1.
+zero occurrences of the reaction :math:`A \xrightarrow{} B` is 1.
 
 .. note::
    You may be wondering why ``shape``, ``initial_state``, and the item

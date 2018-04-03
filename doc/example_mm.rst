@@ -179,7 +179,7 @@ and the transitions we may construct a model ``m``::
 
 Observe that the propensity functions and state transitions for the reactions
 are passed as keyword arguments to ``model.create``, using the keywords
-``propensities`` and ``transtions`` respectively. Note also that we have
+``propensities`` and ``transitions`` respectively. Note also that we have
 also passed a tuple containing the species count functions ``s``, ``e``, ``c``
 and ``p`` as the keyword argument ``species_count``.
 
@@ -363,7 +363,7 @@ the measurement times, expected values, and standard deviations, via
 ``measurement.times``, ``measurement.expected_value`` and
 ``measurement.standard_deviation``, respectively. In order to perform
 element-wise addition and subtraction operations between the expected value
-and standard deviation measurments, we transform them to arrays via
+and standard deviation measurements, we transform them to arrays via
 :func:`numpy.array`.
 
 .. Note::
@@ -373,7 +373,7 @@ and standard deviation measurments, we transform them to arrays via
    shape ``(101, 1)``, since ``101`` is the number of times we called 
    the ``r.write(t, s.y)``. We reshape this expected value array to have the
    shape ``(101, )``, which is the shape of the standard deviation array
-   ``numpy.array(measurement.standard_devation)``, ``(101, )``.
+   ``numpy.array(measurement.standard_deviation)``, ``(101, )``.
 
 When run, this code generates the following plot:
 

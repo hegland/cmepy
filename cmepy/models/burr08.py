@@ -1,5 +1,13 @@
 """
-model of two competing clonotypes
+a model of T cell homeostasis for two competing clonotypes
+
+This model definition is based on S. Macnamara and K. Burrage's formulation of 
+Stirk et al's model:
+
+    E. R. Stirk, C. Molina-Par and H. A. van den Berg.
+    Stochastic niche structure and diversity maintenance in the T cell
+    repertoire. Journal of Theoretical Biology, 255:237-249, 2008.
+
 """
 
 import math
