@@ -1,5 +1,4 @@
 import unittest
-from test import test_support
 
 from scipy.stats import binom, poisson
 from itertools import izip
@@ -163,7 +162,7 @@ def suite():
     return test_suite
 
 def main():
-    test_support.run_unittest(SolverTests)
+    unittest.run(SolverTests)
 
 if __name__ == '__main__':
     main()

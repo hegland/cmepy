@@ -1,5 +1,4 @@
 import unittest
-from test import test_support
 
 import itertools
 
@@ -84,7 +83,7 @@ def suite():
     return suite
 
 def main():
-    test_support.run_unittest(DomainTests)
+    unittest.run(DomainTests)
 
 if __name__ == '__main__':
     main()

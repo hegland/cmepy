@@ -1,5 +1,4 @@
 import unittest
-from test import test_support
 
 import numpy
 import numpy.testing.utils
@@ -134,7 +133,7 @@ def suite():
     return suite
 
 def main():
-    test_support.run_unittest(OdeSolverTests)
+    unittest.run(OdeSolverTests)
 
 if __name__ == '__main__':
     main()

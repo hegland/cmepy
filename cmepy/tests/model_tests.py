@@ -3,7 +3,6 @@ unit tests for cmepy.models sub-package
 """
 
 import unittest
-from test import test_support
 
 
 # models will automatically validated once instantiated,
@@ -65,7 +64,7 @@ def suite():
     return suite
 
 def main():
-    test_support.run_unittest(ModelTests)
+    unittest.run(ModelTests)
 
 if __name__ == '__main__':
     main()
