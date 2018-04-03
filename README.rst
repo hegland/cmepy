@@ -22,16 +22,15 @@ CmePy was developed for Python_ 2.5, and depends upon the following packages:
  *   Matplotlib_ (required only to plot example results)
 
 CmePy also works with Python_ 2.6, provided SciPy_ 0.7 and Numpy_ 1.3 are used.
+The latest version of CmePy also works with Python_ 2.7.
 
 Obtaining CmePy
 ~~~~~~~~~~~~~~~
-`Download CmePy now as a ZIP or TAR archive.
-<http://github.com/fcostin/cmepy/archives/master>`_
 
-Alternatively, if you have the Git_ version control system installed, you may
-prefer to check out a copy of CmePy directly from GitHub, via::
+If you have the Git_ version control system installed, you can 
+check out a copy of CmePy directly from GitHub, via::
 
-	git clone git://github.com/fcostin/cmepy.git
+	git clone git://github.com/hegland/cmepy.git
 
 Testing and Installation
 ~~~~~~~~~~~~~~~~~~~~~~~~
@@ -45,12 +44,12 @@ CmePy may then be installed via the **setup.py** script::
     python setup.py install
 
 More detailed installation tips are available via the
-`online documentation <http://fcostin.github.com/cmepy/>`_.
+`online documentation <http://hegland.github.com/cmepy/>`_.
 
 
 Documentation
 ~~~~~~~~~~~~~
-See http://fcostin.github.com/cmepy/
+See http://hegland.github.com/cmepy/
 
 Authors
 ~~~~~~~
